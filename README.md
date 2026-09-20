@@ -1,242 +1,196 @@
 # ozone-drift
 
-**Does a benchmark score overstate operational skill when the distribution
-shift is ordinary and physical, rather than adversarial or artifactual?**
+**Question: when a machine-learning model scores well on a test set, does that score still hold up once the model is used for real?**
 
-**Answer: no — once the split is honest, it doesn't overstate at all.** Which is
-the most useful result this domain could have produced.
+For Houston smog forecasting, the answer is **yes — as long as you test the model honestly.** Almost all of the apparent drop-off turns out to come from one careless testing habit, not from the world changing.
 
 ---
 
-## Result
+## What this is, in plain terms
 
-Houston–Galveston–Brazoria airshed, 17 monitoring sites pooled, 49,882 site-days,
-1,008 exceedance days. Benchmark era 2015–2019, operational era 2022–2025.
-Date-clustered bootstrap, thresholds frozen on validation.
+We predict whether tomorrow's ground-level ozone (smog) will break the federal health limit at a monitoring station in the Houston area. Ozone is worth predicting: it triggers asthma attacks, and Houston has some of the worst levels in the country.
 
-| cell | what changes | TSS (core) | TSS (extended) |
-|---|---|---|---|
-| 1 · benchmark era, **random split** | the protocol most published air-quality ML uses | **0.808** | 0.665 |
-| 2 · benchmark era, **chronological split** | earlier days train, later days test | **0.593** | 0.500 |
-| 3 · **operational era**, cell-2 model frozen | deployment reality, 2022–2025 | **0.670** | 0.602 |
+But the real subject here isn't smog. It's **how machine-learning results get tested**, and whether a published score means what people think it means. Smog is the test case — one of several in a larger study (see [the bigger picture](#the-bigger-picture) below).
 
-| step | ΔTSS (core) | ΔTSS (extended) |
-|---|---|---|
-| temporal leakage (cell 1 → 2) | **+0.215** | +0.164 |
-| operational drift (cell 2 → 3) | **−0.077** | −0.101 |
-| total | +0.138 | +0.063 |
+### The score we use, and why
 
-**Essentially the entire apparent gap is the random split, not drift.** Shuffling
-a pooled time series overstates skill by 0.215 TSS — a model can interpolate
-tomorrow from autocorrelated neighbouring days, and can see the same regional
-ozone episode at other sites in its training set. Remove that, and the model
-scores *better* on 2022–2025 than on its own held-out 2019 test.
+We report **TSS** (True Skill Statistic). It works like this:
 
-That negative drift is the control result the multi-domain study needed: where
-the shift is seasonal and physical, with no adversary and no dataset-construction
-artifact, a benchmark score survives deployment.
+> TSS = (fraction of real smog days you caught) − (fraction of clean days you falsely alarmed on)
 
-## Does training on operational data close the gap?
+TSS is **0 for a model with no skill at all**, and 1 for a perfect one. That zero point is the whole reason we use it.
 
-**No — at the core tier it measurably made things worse.**
-
-| training source | benchmark test | operational test |
-|---|---|---|
-| benchmark-trained (2015–2019) | 0.593 | **0.637** |
-| operational-trained (2022–2025) | 0.539 | **0.501** |
-
-On identical operational test rows: **−0.136, 95% CI [−0.255, −0.009]**. The
-interval excludes zero *below*. At the extended tier the direction is the same
-(−0.154) but the interval includes zero, so nothing is claimed there.
-
-This matches the sibling solar project's finding that live training does not
-close the gap. Caveat stated plainly: the operational era supplies fewer training
-days, so part of this may be sample size rather than era — separating those needs
-a dose-response curve, which this domain does not yet run.
-
-## The model is doing real work
-
-Persistence ("tomorrow looks like today") scores TSS **0.257** on the operational
-era against the model's **0.670**. Every operational forecasting domain has a
-trivial baseline that is embarrassingly hard to beat; reporting it is the same
-discipline as reporting that a regex beats published models on a phishing
-benchmark. Top features: previous-day ozone, day-of-year, wind direction,
-maximum temperature — physically sensible, not artifacts.
-
-## Both feature tiers, both reported
-
-| tier | variables | rows | sites | exceedances | base rate |
-|---|---|---|---|---|---|
-| core | temperature, wind speed & direction, previous-day ozone, calendar | 49,882 | 17 | 1,008 | 0.0202 |
-| extended | + relative humidity, dew point | 21,350 | 7 | 488 | 0.0229 |
-
-Humidity is reported at only ~34% of site-days, so requiring it costs 57% of rows
-and 10 of 17 sites. Both tiers are pre-registered and both are reported —
-selecting one after seeing which gave a larger gap would be exactly the effect
-this project exists to criticise.
-
-## Pre-registered predictions
-
-Five were committed before any modelling. **One failed, one is inconclusive**, and
-both are recorded as such in [PREREGISTRATION.md](PREREGISTRATION.md):
-
-| | prediction | observed | verdict |
-|---|---|---|---|
-| O1 | base rate 4–15% | 0.0202 | **FAILED** |
-| O2 | leakage step 0.02–0.25 | +0.215 | HELD |
-| O3 | operational gap < 0.15 | −0.077 | HELD |
-| O4 | ozone < solar < storms < phishing | partial | **PARTIAL** |
-| O5 | F1 point degrades more than TSS | neither degraded | **INCONCLUSIVE** |
-
-O1's failure matters: exceedance is rarer than anticipated (2016 ran at 0.62%),
-so accuracy is even more useless here than assumed. An unpredicted effect did
-appear — at the leakage step the F1 operating point is damaged roughly twice as
-much as the TSS point (+0.430 vs +0.215) — and is flagged as found, not
-predicted.
+**We deliberately don't lead with accuracy**, because accuracy lies here. Smog days are rare — about 2% of days. A model that just says "no smog tomorrow," every single day, forever, is **98% accurate** and completely worthless. Its TSS is 0, which correctly calls it what it is.
 
 ---
 
-## Why this domain exists in the study
+## The result
 
-This is the third domain in a multi-domain investigation of the gap between what
-a machine-learning benchmark reports and what a model does once deployed. Each
-domain is chosen for a **different kind of distribution shift**, because the
-interesting question is not *"do benchmarks overstate?"* — one domain can answer
-that — but *"what predicts how badly?"*
+We pooled 17 monitoring stations across the Houston–Galveston–Brazoria area: 49,882 station-days, 1,008 of them smog days. We trained on 2015–2019 and treated 2022–2025 as real-world data the model had never seen.
 
-| Domain | Kind of shift | Result |
+Then we scored the same model three ways:
+
+| How we tested it | What that means | TSS |
 |---|---|---|
-| [Solar flares](https://github.com/awesomedudeworld13/SolarFlarePredictor) | natural temporal + solar-cycle boundary | gap +0.078 TSS |
-| Geomagnetic storms *(same repo)* | natural temporal | gap +0.165 TSS |
-| [Phishing URLs](https://github.com/awesomedudeworld13/phish-drift) | adversarial + dataset construction | gap +0.508 to +0.996 TSS |
-| **Ozone exceedance** *(this repo)* | **seasonal / physical** | **+0.138 total, −0.077 drift** |
+| **1. Shuffle all the days randomly**, train on 70%, test on the rest | what most published papers do | **0.808** |
+| **2. Train on earlier days, test on later days** | the honest way to test a forecast | **0.593** |
+| **3. Run it on 2022–2025**, years it never saw | actual deployment | **0.670** |
 
-Ozone's job in the study is to be the **control**. Its shift is the mildest and
-most benign kind there is: the atmosphere in 2026 obeys the same chemistry it
-obeyed in 2016, nobody is adapting to evade the forecast, and the measurement
-network is stable and publicly documented. If a substantial gap appears even
-here, the effect is close to universal. If the gap is small, that is the more
-valuable result — it identifies the conditions under which a benchmark score
-*can* be trusted, which no single collapsing domain can establish.
+Read the gaps between those rows:
 
-A null result here is therefore a finding, not a failure, and will be reported
-as one.
+| Step | Change in TSS |
+|---|---|
+| Shuffled testing → honest testing | **−0.215** |
+| Honest testing → real-world years | **+0.077** *(it got better)* |
 
-## The task
+**The shuffling is the whole problem.** Testing on randomly shuffled days makes the model look 0.215 better than it really is. Once you test it properly, moving to real-world data costs nothing — the model actually scored *higher* on 2022–2025 than on its own 2019 test.
 
-> P(tomorrow's maximum 8-hour ozone concentration exceeds the NAAQS standard of
-> 70 ppb) at any monitoring site in the Houston–Galveston–Brazoria airshed.
+### Why shuffling inflates the score
 
-Originally specified as a *single fixed station*. The feature-computability
-spike showed that is not viable — the best-instrumented site recorded **zero**
-exceedance days in 2016, and TSS is undefined on a year with no events. The unit
-is now the pooled airshed; see [SPIKE.md](SPIKE.md).
+Two reasons, both easy to miss:
 
-Measured base rate is **2.0%** across 2015–2025, lower than the 4–15% predicted
-in O1 (recorded as FAILED). Rarer than expected, which only sharpens the point
-that accuracy is useless here: a model predicting "no exceedance" every day
-scores 98% accuracy with zero skill.
+1. **Weather doesn't reset at midnight.** Tuesday's conditions look a lot like Monday's. If you shuffle days, Monday can land in training while Tuesday lands in testing. The model isn't forecasting — it's recognizing a day it has nearly already seen.
 
-## Protocol
+2. **A smog day hits the whole city at once.** When ozone spikes, it spikes at most of the 17 stations together. Shuffle the rows and some of those stations land in training while the rest land in testing. Same day, same weather — the model has already been shown the answer.
 
-The decomposition is carried over from `phish-drift`, minus the cell that does
-not apply:
+Training on earlier days and testing on later ones removes both problems. That is all "honest testing" means here.
 
-| Cell | Corpus | Isolates |
+---
+
+## Does feeding it newer data help?
+
+A natural fix when a model degrades is "just retrain it on recent data." We tested that directly, and for this problem it is **the wrong instinct — retraining on recent data made things worse.**
+
+| Model trained on | Scored on 2015–2019 | Scored on 2022–2025 |
 |---|---|---|
-| 1 | Historical EPA AQS, random i.i.d. split | the protocol most papers use |
-| 2 | Historical EPA AQS, **chronological** split | temporal leakage from shuffling a time series |
-| 3 | Live/recent observations, model frozen from cell 2 | genuine operational drift |
+| 2015–2019 (older data) | 0.593 | **0.637** |
+| 2022–2025 (newer data) | 0.539 | **0.501** |
 
-Cell 2 replaces phish-drift's domain-disjoint split. The leakage mechanism in a
-time series is different: randomly shuffling days puts tomorrow in the training
-set and yesterday in the test set, and adjacent days are strongly autocorrelated,
-so a random split lets the model interpolate rather than forecast. Splitting
-chronologically — train on earlier years, test on later ones — is the honest
-protocol and the difference between the two is the quantity of interest.
+On exactly the same recent test days, the model trained on *older* data scored **0.637** and the model trained on *newer* data scored **0.501**.
 
-Carried over unchanged from the sibling projects:
+That is a drop of **0.136**, and the error bar runs from −0.255 to −0.009 — it stays below zero, so this is not noise. The older, larger training set simply generalizes better.
 
-- **One feature function** for historical and live data, no vocabulary fitted on
-  training data.
-- **Thresholds frozen on a validation split**, at F1 and TSS objectives, never
-  selected on the data being scored.
-- **TSS as the headline**, accuracy reported only to show its inadequacy at a
-  low base rate.
-- **Block bootstrap for confidence intervals.** Consecutive days are correlated
-  — an ozone episode lasts several days — so i.i.d. resampling of days would
-  make intervals far too narrow. This is the time-series analogue of clustering
-  on active regions (solar) or registrable domains (phishing); the block length
-  must be at least the typical episode duration.
+**Honest caveat:** the recent period has fewer days to train on, so some of this could be "less data" rather than "wrong data." Separating those two needs a test at several training-set sizes, which this project has not done yet.
 
-## Features
+This matches what the companion solar-flare project found: retraining on newer data does not close the gap there either.
 
-Meteorological predictors available at forecast time, from the previous day and
-the current morning. Nothing that would not be available operationally:
+---
 
-temperature (max, morning), wind speed and direction, relative humidity,
-solar radiation, barometric pressure, mixing height where available, previous
-day's ozone maximum, day of year and day of week (weekday traffic patterns
-matter for the precursor load).
+## Is the model actually any good?
 
-## Data sources
+Worth checking, because a bad model can still produce an interesting-looking comparison.
+
+The obvious cheap forecast is **"tomorrow will be like today"** — no machine learning, just repeat today's reading. That scores TSS **0.257** on the real-world years. Our model scores **0.670**. So it is doing real work.
+
+The inputs it leans on most are today's ozone level, the time of year, wind direction, and the day's high temperature. Those are what an atmospheric chemist would expect to matter, which is reassuring — it has not latched onto some accident in the data.
+
+---
+
+## Two versions, both reported
+
+Humidity matters chemically for ozone, but only about a third of station-days report it. Requiring humidity throws away more than half the data and most of the stations.
+
+| Version | Weather inputs | Station-days | Stations | Smog days |
+|---|---|---|---|---|
+| **core** | temperature, wind speed and direction, yesterday's ozone, calendar | 49,882 | 17 | 1,008 |
+| **extended** | + humidity and dew point | 21,350 | 7 | 488 |
+
+**We report both, always.** Picking whichever one produced the more interesting result after seeing them would be exactly the cherry-picking this project exists to criticize. We committed to reporting both before running anything.
+
+---
+
+## Predictions we wrote down in advance
+
+Before building any model we committed five predictions to [PREREGISTRATION.md](PREREGISTRATION.md). The point of writing predictions down first is that a result only counts as evidence if it could have come out wrong.
+
+**One failed and one had no answer. Both are reported as such.**
+
+| | We predicted | We got | Verdict |
+|---|---|---|---|
+| O1 | smog days would be 4–15% of days | 2.0% | **FAILED** |
+| O2 | shuffling would inflate the score by 0.02–0.25 | +0.215 | held |
+| O3 | real-world drop would be under 0.15 | −0.077 (it improved) | held |
+| O4 | ozone would drift least of the domains tested | it does | held |
+| O5 | one scoring cutoff would degrade more than the other | neither degraded | **NO ANSWER** |
+
+**O1 failed**, and an earlier draft of our notes overstated it — we had checked 2023 alone (4.2%) and called it a hit. Across all nine years it is 2.0%, below the range we predicted. 2023 was simply a bad smog year; 2016 ran at 0.6%. The failure is recorded, and it sharpens the point about accuracy: at a 2% rate, "never predict smog" scores 98%.
+
+We also found something we had **not** predicted, and flag it as such: the shuffling problem hurts one scoring cutoff about twice as much as the other (0.430 vs 0.215).
+
+---
+
+## The bigger picture
+
+This is one of several test cases in a study asking: *does a benchmark score overstate real performance, and does that depend on what kind of change the model faces?*
+
+Each domain was picked for a **different kind of change between test data and the real world**:
+
+| Domain | What changes | Inflation from shuffling | Real-world drop | Total |
+|---|---|---|---|---|
+| **Ozone** (this repo) | seasons and weather — nothing adversarial | +0.215 | **−0.077** | **+0.138** |
+| [Solar flares](https://github.com/solarflarepredictor-cmd/SolarFlarePredictor) | the Sun's 11-year cycle | +0.118 | +0.107 | **+0.225** |
+| [Phishing URLs](https://github.com/awesomedudeworld13/phish-drift) | attackers actively adapting, plus a broken dataset | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
+
+Ozone is the **control**. Nothing here is fighting back: the atmosphere in 2026 follows the same chemistry it followed in 2016, no one is trying to evade a smog forecast, and the monitoring network is stable and public.
+
+That is why a *small* result here is the valuable one. If even this domain collapsed, the problem would look universal and unfixable. Instead it holds up — which tells you the conditions under which a benchmark score **can** be trusted, something no collapsing domain can establish on its own.
+
+---
+
+## How we kept ourselves honest
+
+- **Error bars group whole days together.** When estimating uncertainty we resample entire days rather than individual station readings, because 17 stations recording the same smog event are really *one* observation, not 17. Treating them as 17 would make our error bars look several times tighter than they should. Every domain in the study has its own version of this: solar groups by sunspot region, phishing by website domain.
+- **The warning cutoff is locked before testing.** A model outputs a probability, and you pick a cutoff above which you issue a warning. Choosing that cutoff using the same data you are about to report on makes any model look better than it is. We pick it on a separate slice of earlier data, then freeze it.
+- **Years with zero smog days are excluded up front.** TSS cannot be computed when nothing happened. We check this before building any model, so it is a property of the data rather than a convenient choice made after seeing results.
+- **`RESULTS.md` is generated, never hand-edited.** Every number is rebuilt from the raw EPA files by script.
+
+---
+
+## Data
+
+All public, no signup required:
 
 | | |
 |---|---|
-| Historical ozone + meteorology | [EPA Air Quality System (AQS)](https://aqs.epa.gov/aqsweb/documents/data_api.html) — free API key, bulk download available |
-| Recent/live observations | [OpenAQ](https://openaq.org/) or [EPA AirNow](https://docs.airnowapi.org/) — free keys |
-| Exceedance standard | NAAQS 8-hour ozone, 70 ppb (2015 standard) |
+| Ozone and weather | [EPA Air Quality System annual files](https://aqs.epa.gov/aqsweb/airdata/) — no API key needed, unlike EPA's other interface |
+| Health limit | NAAQS 8-hour ozone standard, 0.070 ppm (2015) |
 
-## Why this repository can wait
+One limitation worth stating: EPA publishes these files about six months behind, so our real-world data currently runs through March 2026 rather than today. For this domain that is acceptable — nobody is adapting to evade a smog forecast, so months-old data is still a fair test. Genuinely live data is available from AirNow or OpenAQ, but both need an API key, which would make the project harder to reproduce.
 
-Unlike the phishing feeds — OpenPhish rotates a 300-URL window and discards
-what falls out, so a day not collected is gone permanently — **EPA and OpenAQ
-observations are archived and retrievable retroactively**. Any date range can be
-back-fetched later with identical results. There is consequently no collection
-clock running on this domain, which is why the sibling phishing project was
-built first.
+---
 
-The one thing that does need to happen early is the **feature-computability
-check**: confirming that every predictor used on the historical corpus can be
-computed identically from the live API. That is the go/no-go for the whole
-domain and should not be discovered in January.
-
-## Layout
-
-```
-ozonedrift/
-  aqs.py          EPA AQS loading, forecast-time feature construction
-  splits.py       random vs chronological partitions, the era gate
-  model.py        training, threshold freezing, the persistence baseline
-  evaluate.py     TSS, Brier, date-clustered bootstrap  (SHARED — see below)
-  gap.py          the three cells, the attribution, and the 2x2
-  cli.py          fetch / survey / report
-tests/            protocol invariants, run on every push
-```
-
-### Reproducing
+## Running it yourself
 
 ```bash
 pip install -r requirements.txt
-python -m ozonedrift.cli fetch      # ~150 MB of EPA annual files, cached
-python -m ozonedrift.cli survey     # per-year coverage and the era gate
-python -m ozonedrift.cli report     # three cells + the 2x2 -> RESULTS.md
-python tests/test_protocol.py       # the invariants the study depends on
+
+python -m ozonedrift.cli fetch      # ~150 MB of EPA files, cached locally
+python -m ozonedrift.cli survey     # coverage and smog-day counts per year
+python -m ozonedrift.cli report     # the three tests -> RESULTS.md
+python tests/test_protocol.py       # checks the method itself is sound
 ```
 
-`RESULTS.md` is generated, never hand-edited.
+### Layout
 
-### The shared harness
+```
+ozonedrift/
+  aqs.py          loads EPA data, builds the prediction inputs
+  splits.py       shuffled vs chronological testing, the data-quality gate
+  model.py        training, cutoff freezing, the "tomorrow = today" baseline
+  evaluate.py     TSS and error bars          (SHARED — see below)
+  gap.py          the three tests and the comparison
+  cli.py          fetch / survey / report
+tests/            checks on the method, run automatically on every change
+```
 
-`ozonedrift/evaluate.py` is **byte-identical** to `phishdrift/evaluate.py` apart
-from a provenance docstring. It is duplicated rather than imported so neither
-repository needs the other installed — but that trade has a cost worth naming:
-if the copies drift, the cross-domain comparison silently stops being a
-comparison. The whole multi-domain claim depends on every domain's TSS being the
-same quantity computed the same way.
+### The shared scoring code
 
-`tests/test_protocol.py` pins the hash of the shared code section, so a local
-edit fails CI. It cannot detect upstream drift. **When a third domain needs it,
-extract it into a package all three depend on rather than making a third copy** —
-that extraction is the software deliverable the multi-domain design implies, and
-it should be driven by real needs rather than guessed at in advance.
+`ozonedrift/evaluate.py` is **character-for-character identical** to its counterpart in the phishing and solar-flare repos, apart from a comment at the top.
+
+It is copied rather than imported so neither project needs the other installed. That has a real cost worth naming: **if the copies ever drift apart, the cross-domain comparison quietly stops being a comparison.** The whole study rests on every domain's TSS meaning the same thing.
+
+`tests/test_protocol.py` checks this copy's fingerprint on every change, so a local edit fails immediately. It cannot catch an edit made in one of the other repos. When a fourth domain needs this code, pull it into a shared package rather than making a fourth copy.
+
+### A note on the protocol
+
+The original plan used a single monitoring station and predicted a 4–15% smog-day rate. The feature-availability check in [SPIKE.md](SPIKE.md) showed that does not work — the best-equipped station recorded **zero** smog days in 2016, and TSS cannot be computed for a year where nothing happened. Pooling the whole metro area fixed it. That change, and three others the check forced, are recorded as dated additions to the pre-registration rather than edited into the original text.

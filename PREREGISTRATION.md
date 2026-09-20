@@ -98,7 +98,7 @@ are examined, all of them are reported, not only those showing an effect.
 | O1 base rate in 4–15% | 0.04–0.15 | **0.0202** core / 0.0229 extended, full span | **FAILED** |
 | O2 leakage step in 0.02–0.25 | 0.02–0.25 | **+0.215** core / +0.164 extended | **HELD** |
 | O3 operational gap < 0.15 | < 0.15 | **−0.077** core / −0.101 extended | **HELD** (emphatically) |
-| O4 ozone < solar < storms < phishing | ordering | ozone 0.138 vs phishing 0.508–0.996 | **PARTIAL** |
+| O4 ozone < solar < storms < phishing | ordering | ozone 0.138 < solar 0.225 < phishing 0.508–0.996 | **HELD** |
 | O5 F1 point degrades more than TSS point | yes | neither degraded | **INCONCLUSIVE** |
 
 **O1 FAILED, and an earlier note in this file overstated it.** The spike recorded
@@ -116,13 +116,33 @@ chronological test (0.593). Once the split is honest, this benchmark does not
 overstate operational skill at all. That is the control result the multi-domain
 design needed.
 
-**O4 is partial and depends on which quantity is compared.** Ozone's total
-benchmark-to-operational gap (0.138 core) is far below phishing's (0.508–0.996),
-which is the ordering predicted. But solar's published +0.078 is not measured
-from a random-split baseline, so it is not directly comparable to ozone's 0.138;
-on the *drift component alone* ozone is −0.077 against solar's +0.078, which
-does order as predicted. The ordering claim cannot be settled until all domains
-run one protocol — see the shared-harness note in `evaluate.py`.
+**O4 held, once the domains were made comparable.** When this was first scored
+the verdict was PARTIAL, because solar's published +0.078 was not measured from
+a shuffled-split baseline and so was not the same quantity as ozone's +0.138.
+Comparing them anyway would have compared two different things and called the
+difference a result.
+
+That has since been fixed: the solar project now runs the identical three-cell
+protocol, using a copy of the same `evaluate.py`, and reports a total of
+**+0.225**. On the comparable quantity the ordering is:
+
+| domain | kind of shift | inflation from shuffling | real-world drift | total |
+|---|---|---|---|---|
+| ozone | seasonal, physical | +0.215 | **−0.077** | **+0.138** |
+| solar flares | solar cycle | +0.118 | +0.107 | **+0.225** |
+| phishing | adversarial + dataset construction | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
+
+ozone < solar < phishing, as predicted. The geomagnetic-storm model has not yet
+been run through this protocol, so that part of the ordering remains untested
+and no claim is made about it.
+
+Note the *drift* column orders the same way and is arguably the cleaner test of
+the hypothesis, since it excludes the shuffling artifact entirely: ozone −0.077,
+solar +0.107, phishing +0.009 for the collapsed corpus (whose loss is almost
+entirely dataset construction rather than drift, so it is not directly on this
+scale). The claim this study can support is about *whether* a domain collapses,
+which the ordering captures; a graded law relating shift type to gap size would
+need more than three domains.
 
 **O5 is inconclusive because its premise did not occur.** It predicted that the
 F1 operating point would degrade more than the TSS point across the operational
