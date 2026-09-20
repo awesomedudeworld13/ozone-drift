@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install --quiet -r requirements.txt
+
+      # These guard the protocol, not the results: a chronological split that
+      # leaks a date, a random split that doesn't leak, a label built by
+      # shifting rows instead of days, an i.i.d. bootstrap over pooled
+      # site-days, or a drifted copy of the shared evaluation harness would each
+      # invalidate the study with no visible error.
+      #
+      # Deliberately does NOT download the ~150 MB of AQS annual files. The
+      # real-data label check skips itself when the cache is absent, so this job
+      # stays fast and the full rebuild lives in report.yml.
+      - name: Invariant checks
+        run: python tests/test_protocol.py

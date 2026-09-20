@@ -1,0 +1,829 @@
+{
+  "generated_at_utc": "2026-09-20T20:38:14+00:00",
+  "tier": "core",
+  "bootstrap_resamples": 1000,
+  "cluster_key": "date",
+  "benchmark_years": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019
+  ],
+  "operational_years": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_features": 10,
+  "era_gate": {
+    "benchmark": {
+      "passed": true,
+      "years": [
+        {
+          "year": 2015,
+          "rows": 5637,
+          "days": 365,
+          "positives": 176,
+          "base_rate": 0.031222
+        },
+        {
+          "year": 2016,
+          "rows": 5682,
+          "days": 366,
+          "positives": 35,
+          "base_rate": 0.00616
+        },
+        {
+          "year": 2017,
+          "rows": 5235,
+          "days": 362,
+          "positives": 59,
+          "base_rate": 0.01127
+        },
+        {
+          "year": 2018,
+          "rows": 5734,
+          "days": 365,
+          "positives": 103,
+          "base_rate": 0.017963
+        },
+        {
+          "year": 2019,
+          "rows": 5522,
+          "days": 364,
+          "positives": 79,
+          "base_rate": 0.014306
+        }
+      ]
+    },
+    "operational": {
+      "passed": true,
+      "years": [
+        {
+          "year": 2022,
+          "rows": 5611,
+          "days": 365,
+          "positives": 66,
+          "base_rate": 0.011763
+        },
+        {
+          "year": 2023,
+          "rows": 4442,
+          "days": 365,
+          "positives": 186,
+          "base_rate": 0.041873
+        },
+        {
+          "year": 2024,
+          "rows": 6023,
+          "days": 366,
+          "positives": 180,
+          "base_rate": 0.029885
+        },
+        {
+          "year": 2025,
+          "rows": 5996,
+          "days": 364,
+          "positives": 124,
+          "base_rate": 0.02068
+        }
+      ]
+    }
+  },
+  "cells": {
+    "cell1_benchmark_random": {
+      "name": "cell1_benchmark_random",
+      "description": "Benchmark era, random i.i.d. split \u2014 the protocol most published air-quality ML uses.",
+      "n": 4174,
+      "days": 1674,
+      "base_rate": 0.016531,
+      "peak_tss": 0.818768,
+      "operating_points": {
+        "f1": {
+          "n": 4174,
+          "base_rate": 0.016531,
+          "threshold": 0.358888,
+          "tp": 31,
+          "fp": 33,
+          "fn": 38,
+          "tn": 4072,
+          "recall": 0.449275,
+          "false_alarm_rate": 0.008039,
+          "precision": 0.484375,
+          "f1": 0.466165,
+          "accuracy": 0.98299,
+          "tss": 0.441236,
+          "brier": 0.012632,
+          "brier_skill": 0.222997,
+          "tss_ci95": [
+            0.314739,
+            0.580547
+          ]
+        },
+        "tss": {
+          "n": 4174,
+          "base_rate": 0.016531,
+          "threshold": 0.057928,
+          "tp": 63,
+          "fp": 432,
+          "fn": 6,
+          "tn": 3673,
+          "recall": 0.913043,
+          "false_alarm_rate": 0.105238,
+          "precision": 0.127273,
+          "f1": 0.223404,
+          "accuracy": 0.895065,
+          "tss": 0.807806,
+          "brier": 0.012632,
+          "brier_skill": 0.222997,
+          "tss_ci95": [
+            0.726129,
+            0.865692
+          ]
+        }
+      }
+    },
+    "cell2_benchmark_chronological": {
+      "name": "cell2_benchmark_chronological",
+      "description": "Benchmark era, chronological split \u2014 earlier days train, later days test, no date shared.",
+      "n": 4164,
+      "days": 274,
+      "base_rate": 0.017051,
+      "peak_tss": 0.604904,
+      "operating_points": {
+        "f1": {
+          "n": 4164,
+          "base_rate": 0.017051,
+          "threshold": 0.289377,
+          "tp": 2,
+          "fp": 71,
+          "fn": 69,
+          "tn": 4022,
+          "recall": 0.028169,
+          "false_alarm_rate": 0.017347,
+          "precision": 0.027397,
+          "f1": 0.027778,
+          "accuracy": 0.966378,
+          "tss": 0.010822,
+          "brier": 0.018956,
+          "brier_skill": -0.131026,
+          "tss_ci95": [
+            -0.022016,
+            0.052922
+          ]
+        },
+        "tss": {
+          "n": 4164,
+          "base_rate": 0.017051,
+          "threshold": 0.023831,
+          "tp": 58,
+          "fp": 917,
+          "fn": 13,
+          "tn": 3176,
+          "recall": 0.816901,
+          "false_alarm_rate": 0.224041,
+          "precision": 0.059487,
+          "f1": 0.110899,
+          "accuracy": 0.776657,
+          "tss": 0.59286,
+          "brier": 0.018956,
+          "brier_skill": -0.131026,
+          "tss_ci95": [
+            0.421398,
+            0.723759
+          ]
+        }
+      }
+    },
+    "cell3_operational": {
+      "name": "cell3_operational",
+      "description": "Operational era, cell-2 model frozen \u2014 deployment reality.",
+      "n": 22072,
+      "days": 1460,
+      "base_rate": 0.02519,
+      "peak_tss": 0.678028,
+      "operating_points": {
+        "f1": {
+          "n": 22072,
+          "base_rate": 0.02519,
+          "threshold": 0.289377,
+          "tp": 64,
+          "fp": 273,
+          "fn": 492,
+          "tn": 21243,
+          "recall": 0.115108,
+          "false_alarm_rate": 0.012688,
+          "precision": 0.189911,
+          "f1": 0.143337,
+          "accuracy": 0.965341,
+          "tss": 0.10242,
+          "brier": 0.022914,
+          "brier_skill": 0.06685,
+          "tss_ci95": [
+            0.062006,
+            0.146852
+          ]
+        },
+        "tss": {
+          "n": 22072,
+          "base_rate": 0.02519,
+          "threshold": 0.023831,
+          "tp": 495,
+          "fp": 4734,
+          "fn": 61,
+          "tn": 16782,
+          "recall": 0.890288,
+          "false_alarm_rate": 0.220022,
+          "precision": 0.094664,
+          "f1": 0.171132,
+          "accuracy": 0.782756,
+          "tss": 0.670265,
+          "brier": 0.022914,
+          "brier_skill": 0.06685,
+          "tss_ci95": [
+            0.622023,
+            0.713298
+          ]
+        }
+      }
+    }
+  },
+  "attribution_tss": {
+    "f1": {
+      "temporal_leakage": 0.430414,
+      "operational_drift": -0.091598,
+      "total": 0.338816
+    },
+    "tss": {
+      "temporal_leakage": 0.214946,
+      "operational_drift": -0.077405,
+      "total": 0.137541
+    }
+  },
+  "attribution_steps": [
+    {
+      "step": "temporal_leakage",
+      "from": "cell1_benchmark_random",
+      "to": "cell2_benchmark_chronological",
+      "meaning": "Same era and same data; only the partitioning changes. Skill lost here came from interpolating between autocorrelated days and from seeing the same regional episode at other sites."
+    },
+    {
+      "step": "operational_drift",
+      "from": "cell2_benchmark_chronological",
+      "to": "cell3_operational",
+      "meaning": "Same honest protocol, a later era. Skill lost here is genuine drift \u2014 the seasonal and physical shift this domain exists to measure."
+    }
+  ],
+  "live_training": {
+    "question": "Does training on operational data close the gap?",
+    "cells": {
+      "A_benchmark_trained_on_benchmark": {
+        "name": "A",
+        "description": "Benchmark-trained on its own chronological test.",
+        "n": 4164,
+        "days": 274,
+        "base_rate": 0.017051,
+        "peak_tss": 0.604904,
+        "operating_points": {
+          "tss": {
+            "n": 4164,
+            "base_rate": 0.017051,
+            "threshold": 0.023831,
+            "tp": 58,
+            "fp": 917,
+            "fn": 13,
+            "tn": 3176,
+            "recall": 0.816901,
+            "false_alarm_rate": 0.224041,
+            "precision": 0.059487,
+            "f1": 0.110899,
+            "accuracy": 0.776657,
+            "tss": 0.59286,
+            "brier": 0.018956,
+            "brier_skill": -0.131026,
+            "tss_ci95": [
+              0.421398,
+              0.723759
+            ]
+          }
+        }
+      },
+      "B_benchmark_trained_on_operational": {
+        "name": "B",
+        "description": "Benchmark-trained on the operational era \u2014 the gap.",
+        "n": 3656,
+        "days": 220,
+        "base_rate": 0.030908,
+        "peak_tss": 0.677687,
+        "operating_points": {
+          "tss": {
+            "n": 3656,
+            "base_rate": 0.030908,
+            "threshold": 0.023831,
+            "tp": 103,
+            "fp": 971,
+            "fn": 10,
+            "tn": 2572,
+            "recall": 0.911504,
+            "false_alarm_rate": 0.274062,
+            "precision": 0.095903,
+            "f1": 0.173547,
+            "accuracy": 0.731674,
+            "tss": 0.637443,
+            "brier": 0.028485,
+            "brier_skill": 0.049008,
+            "tss_ci95": [
+              0.527021,
+              0.732271
+            ]
+          }
+        }
+      },
+      "C_operational_trained_on_benchmark": {
+        "name": "C",
+        "description": "Operational-trained on the benchmark test \u2014 does it generalise backwards, or only fit its own era?",
+        "n": 4164,
+        "days": 274,
+        "base_rate": 0.017051,
+        "peak_tss": 0.61508,
+        "operating_points": {
+          "tss": {
+            "n": 4164,
+            "base_rate": 0.017051,
+            "threshold": 0.013984,
+            "tp": 66,
+            "fp": 1598,
+            "fn": 5,
+            "tn": 2495,
+            "recall": 0.929577,
+            "false_alarm_rate": 0.390423,
+            "precision": 0.039663,
+            "f1": 0.076081,
+            "accuracy": 0.615034,
+            "tss": 0.539155,
+            "brier": 0.018701,
+            "brier_skill": -0.115773,
+            "tss_ci95": [
+              0.44441,
+              0.619916
+            ]
+          }
+        }
+      },
+      "D_operational_trained_on_operational": {
+        "name": "D",
+        "description": "Operational-trained on the operational test \u2014 the best achievable with deployment-era data.",
+        "n": 3656,
+        "days": 220,
+        "base_rate": 0.030908,
+        "peak_tss": 0.676858,
+        "operating_points": {
+          "tss": {
+            "n": 3656,
+            "base_rate": 0.030908,
+            "threshold": 0.013984,
+            "tp": 109,
+            "fp": 1642,
+            "fn": 4,
+            "tn": 1901,
+            "recall": 0.964602,
+            "false_alarm_rate": 0.463449,
+            "precision": 0.06225,
+            "f1": 0.116953,
+            "accuracy": 0.549781,
+            "tss": 0.501153,
+            "brier": 0.029738,
+            "brier_skill": 0.007166,
+            "tss_ci95": [
+              0.431686,
+              0.56555
+            ]
+          }
+        }
+      }
+    },
+    "gap_A_minus_B": -0.044583,
+    "recovery_D_minus_B": -0.13629,
+    "recovery_ci95": [
+      -0.254864,
+      -0.008776
+    ],
+    "recovery_significant": true,
+    "recovery_direction": "harms",
+    "recovery_fraction_of_gap": 3.056995,
+    "answer": "Operational training changes TSS by -0.136 on the same operational test rows (95% CI -0.255..-0.009). The interval excludes zero BELOW, so training on the newer era measurably HURT \u2014 the benchmark-era model generalises to deployment better than a model fitted on deployment-era data. The loss is not a training-data problem, and collecting more recent data would not fix it.",
+    "operational_model": {
+      "model_version": 1,
+      "label": "core/operational/chronological",
+      "trained_at_utc": "2026-09-20T20:38:22+00:00",
+      "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+      "python": "3.12.10",
+      "split_name": "chronological",
+      "split_sizes": {
+        "train": {
+          "rows": 14819,
+          "days": 1021,
+          "positives": 423,
+          "base_rate": 0.028544
+        },
+        "val": {
+          "rows": 3597,
+          "days": 219,
+          "positives": 20,
+          "base_rate": 0.00556
+        },
+        "test": {
+          "rows": 3656,
+          "days": 220,
+          "positives": 113,
+          "base_rate": 0.030908
+        }
+      },
+      "estimator": "RandomForestClassifier",
+      "hyperparameters": {
+        "n_estimators": 400,
+        "min_samples_leaf": 3,
+        "class_weight": "balanced_subsample",
+        "random_state": 20260920
+      },
+      "feature_names": [
+        "outdoor_temperature_mean",
+        "outdoor_temperature_max",
+        "wind_speed_resultant_mean",
+        "wind_speed_resultant_max",
+        "wind_direction_resultant_mean",
+        "wind_direction_resultant_max",
+        "o3_max8h",
+        "doy_sin",
+        "doy_cos",
+        "day_of_week"
+      ],
+      "thresholds": {
+        "f1": 0.063946,
+        "tss": 0.013984
+      },
+      "top_features": [
+        {
+          "name": "o3_max8h",
+          "importance": 0.299492
+        },
+        {
+          "name": "outdoor_temperature_max",
+          "importance": 0.152268
+        },
+        {
+          "name": "doy_cos",
+          "importance": 0.127061
+        },
+        {
+          "name": "outdoor_temperature_mean",
+          "importance": 0.100502
+        },
+        {
+          "name": "wind_direction_resultant_max",
+          "importance": 0.083681
+        },
+        {
+          "name": "doy_sin",
+          "importance": 0.070183
+        },
+        {
+          "name": "wind_speed_resultant_mean",
+          "importance": 0.055652
+        },
+        {
+          "name": "wind_direction_resultant_mean",
+          "importance": 0.050881
+        },
+        {
+          "name": "wind_speed_resultant_max",
+          "importance": 0.037514
+        },
+        {
+          "name": "day_of_week",
+          "importance": 0.022767
+        }
+      ],
+      "train_span": [
+        "2022-01-01",
+        "2024-10-17"
+      ],
+      "val_span": [
+        "2024-10-18",
+        "2025-05-24"
+      ]
+    }
+  },
+  "persistence_baseline": {
+    "benchmark_test": {
+      "name": "benchmark_test",
+      "description": "Persistence: tomorrow looks like today.",
+      "n": 4164,
+      "days": 274,
+      "base_rate": 0.017051,
+      "peak_tss": 0.575328,
+      "operating_points": {
+        "f1": {
+          "n": 4164,
+          "base_rate": 0.017051,
+          "threshold": 0.5,
+          "tp": 14,
+          "fp": 67,
+          "fn": 57,
+          "tn": 4026,
+          "recall": 0.197183,
+          "false_alarm_rate": 0.016369,
+          "precision": 0.17284,
+          "f1": 0.184211,
+          "accuracy": 0.970221,
+          "tss": 0.180814,
+          "brier": 0.082821,
+          "brier_skill": -3.941521,
+          "tss_ci95": [
+            0.053541,
+            0.332482
+          ]
+        },
+        "tss": {
+          "n": 4164,
+          "base_rate": 0.017051,
+          "threshold": 0.5,
+          "tp": 14,
+          "fp": 67,
+          "fn": 57,
+          "tn": 4026,
+          "recall": 0.197183,
+          "false_alarm_rate": 0.016369,
+          "precision": 0.17284,
+          "f1": 0.184211,
+          "accuracy": 0.970221,
+          "tss": 0.180814,
+          "brier": 0.082821,
+          "brier_skill": -3.941521,
+          "tss_ci95": [
+            0.053541,
+            0.332482
+          ]
+        }
+      }
+    },
+    "operational": {
+      "name": "operational",
+      "description": "Persistence: tomorrow looks like today.",
+      "n": 22072,
+      "days": 1460,
+      "base_rate": 0.02519,
+      "peak_tss": 0.655897,
+      "operating_points": {
+        "f1": {
+          "n": 22072,
+          "base_rate": 0.02519,
+          "threshold": 0.5,
+          "tp": 155,
+          "fp": 471,
+          "fn": 401,
+          "tn": 21045,
+          "recall": 0.278777,
+          "false_alarm_rate": 0.021891,
+          "precision": 0.247604,
+          "f1": 0.262267,
+          "accuracy": 0.960493,
+          "tss": 0.256886,
+          "brier": 0.086933,
+          "brier_skill": -2.540217,
+          "tss_ci95": [
+            0.197121,
+            0.319684
+          ]
+        },
+        "tss": {
+          "n": 22072,
+          "base_rate": 0.02519,
+          "threshold": 0.5,
+          "tp": 155,
+          "fp": 471,
+          "fn": 401,
+          "tn": 21045,
+          "recall": 0.278777,
+          "false_alarm_rate": 0.021891,
+          "precision": 0.247604,
+          "f1": 0.262267,
+          "accuracy": 0.960493,
+          "tss": 0.256886,
+          "brier": 0.086933,
+          "brier_skill": -2.540217,
+          "tss_ci95": [
+            0.197121,
+            0.319684
+          ]
+        }
+      }
+    }
+  },
+  "models": {
+    "random": {
+      "model_version": 1,
+      "label": "core/benchmark/random",
+      "trained_at_utc": "2026-09-20T20:38:16+00:00",
+      "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+      "python": "3.12.10",
+      "split_name": "random",
+      "split_sizes": {
+        "train": {
+          "rows": 19466,
+          "days": 1821,
+          "positives": 316,
+          "base_rate": 0.016233
+        },
+        "val": {
+          "rows": 4170,
+          "days": 1660,
+          "positives": 67,
+          "base_rate": 0.016067
+        },
+        "test": {
+          "rows": 4174,
+          "days": 1674,
+          "positives": 69,
+          "base_rate": 0.016531
+        }
+      },
+      "estimator": "RandomForestClassifier",
+      "hyperparameters": {
+        "n_estimators": 400,
+        "min_samples_leaf": 3,
+        "class_weight": "balanced_subsample",
+        "random_state": 20260920
+      },
+      "feature_names": [
+        "outdoor_temperature_mean",
+        "outdoor_temperature_max",
+        "wind_speed_resultant_mean",
+        "wind_speed_resultant_max",
+        "wind_direction_resultant_mean",
+        "wind_direction_resultant_max",
+        "o3_max8h",
+        "doy_sin",
+        "doy_cos",
+        "day_of_week"
+      ],
+      "thresholds": {
+        "f1": 0.358888,
+        "tss": 0.057928
+      },
+      "top_features": [
+        {
+          "name": "o3_max8h",
+          "importance": 0.353408
+        },
+        {
+          "name": "doy_cos",
+          "importance": 0.160522
+        },
+        {
+          "name": "wind_direction_resultant_max",
+          "importance": 0.119072
+        },
+        {
+          "name": "outdoor_temperature_max",
+          "importance": 0.073818
+        },
+        {
+          "name": "outdoor_temperature_mean",
+          "importance": 0.063679
+        },
+        {
+          "name": "wind_direction_resultant_mean",
+          "importance": 0.057617
+        },
+        {
+          "name": "wind_speed_resultant_mean",
+          "importance": 0.051386
+        },
+        {
+          "name": "doy_sin",
+          "importance": 0.050969
+        },
+        {
+          "name": "wind_speed_resultant_max",
+          "importance": 0.046835
+        },
+        {
+          "name": "day_of_week",
+          "importance": 0.022693
+        }
+      ],
+      "train_span": [
+        "2015-01-01",
+        "2019-12-30"
+      ],
+      "val_span": [
+        "2015-01-01",
+        "2019-12-30"
+      ]
+    },
+    "chronological": {
+      "model_version": 1,
+      "label": "core/benchmark/chronological",
+      "trained_at_utc": "2026-09-20T20:38:17+00:00",
+      "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+      "python": "3.12.10",
+      "split_name": "chronological",
+      "split_sizes": {
+        "train": {
+          "rows": 19396,
+          "days": 1275,
+          "positives": 314,
+          "base_rate": 0.016189
+        },
+        "val": {
+          "rows": 4250,
+          "days": 273,
+          "positives": 67,
+          "base_rate": 0.015765
+        },
+        "test": {
+          "rows": 4164,
+          "days": 274,
+          "positives": 71,
+          "base_rate": 0.017051
+        }
+      },
+      "estimator": "RandomForestClassifier",
+      "hyperparameters": {
+        "n_estimators": 400,
+        "min_samples_leaf": 3,
+        "class_weight": "balanced_subsample",
+        "random_state": 20260920
+      },
+      "feature_names": [
+        "outdoor_temperature_mean",
+        "outdoor_temperature_max",
+        "wind_speed_resultant_mean",
+        "wind_speed_resultant_max",
+        "wind_direction_resultant_mean",
+        "wind_direction_resultant_max",
+        "o3_max8h",
+        "doy_sin",
+        "doy_cos",
+        "day_of_week"
+      ],
+      "thresholds": {
+        "f1": 0.289377,
+        "tss": 0.023831
+      },
+      "top_features": [
+        {
+          "name": "o3_max8h",
+          "importance": 0.371703
+        },
+        {
+          "name": "doy_cos",
+          "importance": 0.154363
+        },
+        {
+          "name": "wind_direction_resultant_max",
+          "importance": 0.114789
+        },
+        {
+          "name": "doy_sin",
+          "importance": 0.06925
+        },
+        {
+          "name": "outdoor_temperature_max",
+          "importance": 0.065829
+        },
+        {
+          "name": "outdoor_temperature_mean",
+          "importance": 0.061869
+        },
+        {
+          "name": "wind_direction_resultant_mean",
+          "importance": 0.051985
+        },
+        {
+          "name": "wind_speed_resultant_mean",
+          "importance": 0.049914
+        },
+        {
+          "name": "wind_speed_resultant_max",
+          "importance": 0.042438
+        },
+        {
+          "name": "day_of_week",
+          "importance": 0.017861
+        }
+      ],
+      "train_span": [
+        "2015-01-01",
+        "2018-07-01"
+      ],
+      "val_span": [
+        "2018-07-02",
+        "2019-03-31"
+      ]
+    }
+  }
+}

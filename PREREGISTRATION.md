@@ -95,11 +95,71 @@ are examined, all of them are reported, not only those showing an effect.
 
 | Hypothesis | Predicted | Observed | Verdict |
 |---|---|---|---|
-| O1 base rate in 4–15% | 0.04–0.15 | 0.0420 (pooled, 2023) | **HELD** — but see addendum |
-| O2 leakage step in 0.02–0.25 | modest | _pending_ | _pending_ |
-| O3 operational gap < 0.15 | small | _pending_ | _pending_ |
-| O4 ozone < solar < storms < phishing | ordering | _pending_ | _pending_ |
-| O5 F1 point degrades more than TSS point | yes | _pending_ | _pending_ |
+| O1 base rate in 4–15% | 0.04–0.15 | **0.0202** core / 0.0229 extended, full span | **FAILED** |
+| O2 leakage step in 0.02–0.25 | 0.02–0.25 | **+0.215** core / +0.164 extended | **HELD** |
+| O3 operational gap < 0.15 | < 0.15 | **−0.077** core / −0.101 extended | **HELD** (emphatically) |
+| O4 ozone < solar < storms < phishing | ordering | ozone 0.138 vs phishing 0.508–0.996 | **PARTIAL** |
+| O5 F1 point degrades more than TSS point | yes | neither degraded | **INCONCLUSIVE** |
+
+**O1 FAILED, and an earlier note in this file overstated it.** The spike recorded
+0.0420 from 2023 alone and marked O1 held. Across the full nine-year span the
+pooled base rate is **0.0202** (core tier), below the predicted 4–15% band. 2023
+was simply a bad ozone year; 2016 ran at 0.0062 and 2017 at 0.0113. The
+prediction is marked FAILED on the full-span figure, which is the one the study
+actually uses. Consequence: exceedance is rarer than anticipated, so accuracy is
+even more useless here than assumed, and the date-clustered intervals matter more.
+
+**O3 held emphatically, and in an unexpected direction.** The prediction was a
+*small* operational gap. The measured gap is **negative** — the benchmark-era
+model scores *better* on 2022–2025 (TSS 0.670) than on its own held-out 2019
+chronological test (0.593). Once the split is honest, this benchmark does not
+overstate operational skill at all. That is the control result the multi-domain
+design needed.
+
+**O4 is partial and depends on which quantity is compared.** Ozone's total
+benchmark-to-operational gap (0.138 core) is far below phishing's (0.508–0.996),
+which is the ordering predicted. But solar's published +0.078 is not measured
+from a random-split baseline, so it is not directly comparable to ozone's 0.138;
+on the *drift component alone* ozone is −0.077 against solar's +0.078, which
+does order as predicted. The ordering claim cannot be settled until all domains
+run one protocol — see the shared-harness note in `evaluate.py`.
+
+**O5 is inconclusive because its premise did not occur.** It predicted that the
+F1 operating point would degrade more than the TSS point across the operational
+transition. Neither degraded — both improved. The question has no answer here.
+
+A related effect did appear and is worth recording even though it was not
+predicted: at the **temporal-leakage** step the F1 point is damaged far more than
+the TSS point (+0.430 vs +0.215, core). The random-split protocol flatters an
+F1-tuned operating point roughly twice as much as a TSS-tuned one. This was
+found, not predicted, and is flagged as such.
+
+## Unpredicted finding: operational training made things worse
+
+Not registered in advance, and reported for that reason with appropriate caution.
+
+The 2×2 asks whether training on deployment-era data closes the gap. At the core
+tier it does the opposite:
+
+| training source | benchmark test | operational test |
+|---|---|---|
+| benchmark-trained (2015–2019) | 0.593 | **0.637** |
+| operational-trained (2022–2025) | 0.539 | **0.501** |
+
+On identical operational test rows, the benchmark-era model scores 0.637 and the
+operational-era model 0.501 — a change of **−0.136, 95% CI [−0.255, −0.009]**.
+The interval excludes zero *below*, so operational training measurably **hurt**.
+At the extended tier the direction is the same (−0.154) but the interval includes
+zero, so no claim is made there.
+
+This matches the sibling solar project's finding that live training does not
+close the gap. Two domains, two mechanisms, same conclusion: the loss is not a
+training-data problem, and collecting more recent data does not fix it.
+
+Caveat stated plainly: the operational era supplies fewer training days than the
+benchmark era, so part of this may be sample size rather than era. Distinguishing
+those requires a dose-response curve (gap versus quantity of operational training
+data), which the solar project already runs and this one does not yet.
 
 ---
 
