@@ -98,7 +98,7 @@ are examined, all of them are reported, not only those showing an effect.
 | O1 base rate in 4–15% | 0.04–0.15 | **0.0202** core / 0.0229 extended, full span | **FAILED** |
 | O2 leakage step in 0.02–0.25 | 0.02–0.25 | **+0.215** core / +0.164 extended | **HELD** |
 | O3 operational gap < 0.15 | < 0.15 | **−0.077** core / −0.101 extended | **HELD** (emphatically) |
-| O4 ozone < solar < storms < phishing | ordering | ozone 0.138 < solar 0.225 < phishing 0.508–0.996 | **HELD** |
+| O4 ozone < solar < storms < phishing | ordering | 0.138 < 0.225 < 0.396 < 0.508–0.996 | **HELD** |
 | O5 F1 point degrades more than TSS point | yes | neither degraded | **INCONCLUSIVE** |
 
 **O1 FAILED, and an earlier note in this file overstated it.** The spike recorded
@@ -122,17 +122,11 @@ a shuffled-split baseline and so was not the same quantity as ozone's +0.138.
 Comparing them anyway would have compared two different things and called the
 difference a result.
 
-That has since been fixed: the solar project now runs the identical three-cell
-protocol, using a copy of the same `evaluate.py`, and reports a total of
-**+0.225**. On the comparable quantity the ordering is:
+That has since been fixed. All four domains now run the identical three-cell
+protocol and score with the same `benchgap` code, so the numbers are finally
+the same quantity.
 
-| domain | kind of shift | inflation from shuffling | real-world drift | total |
-|---|---|---|---|---|
-| ozone | seasonal, physical | +0.215 | **−0.077** | **+0.138** |
-| solar flares | solar cycle | +0.118 | +0.107 | **+0.225** |
-| phishing | adversarial + dataset construction | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
-
-**All four positions now measured, and the full predicted ordering holds:**
+**All four positions measured, and the full predicted ordering holds:**
 
 | domain | kind of shift | inflation from shuffling | real-world drift | total |
 |---|---|---|---|---|
