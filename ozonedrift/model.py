@@ -31,7 +31,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-from . import evaluate
+from benchgap import evaluate
 from .splits import Split
 
 MODEL_VERSION = 1

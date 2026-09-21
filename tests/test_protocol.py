@@ -13,11 +13,11 @@ error:
   easier multi-day forecasts;
 * an i.i.d. bootstrap over pooled site-days would report intervals several times
   too narrow, because a regional ozone episode is one event, not twenty;
-* a drifted copy of the shared evaluation harness would silently stop the
-  cross-domain comparison from being a comparison.
+* a local copy of the scoring code reappearing would shadow the shared
+  `benchgap` package and silently stop the cross-domain comparison from being
+  a comparison.
 """
 
-import hashlib
 import sys
 from pathlib import Path
 
@@ -26,15 +26,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ozonedrift import evaluate                                    # noqa: E402
+from benchgap import evaluate                                    # noqa: E402
 from ozonedrift.splits import (                                    # noqa: E402
     chronological_split, era_gate, random_split,
 )
-
-# Pinned hash of the shared harness, byte-identical to phishdrift/evaluate.py
-# apart from its provenance docstring. See that file's header.
-SHARED_EVALUATE_SHA256 = "8e4c82594ce72bec5992a0773cd658ce1b0bdd116ad602e26f2d8fdc30e9c29f"
-
 
 def _frame(n_days=200, n_sites=8, seed=0):
     """Synthetic pooled airshed: many sites per day, regional episodes."""
@@ -140,20 +135,29 @@ def test_label_is_next_day_not_same_day():
     assert ((f.next_date - f.date).dt.days == 1).all()
 
 
-def test_shared_evaluate_harness_is_unmodified():
-    """The cross-domain comparison depends on this file being the shared one."""
-    p = Path(__file__).resolve().parent.parent / "ozonedrift" / "evaluate.py"
-    body = p.read_text(encoding="utf-8")
-    # Compare only the code below the provenance docstring, which differs by
-    # design between the two repositories.
-    marker = "from __future__ import annotations"
-    assert marker in body, "evaluate.py lost its import header"
-    code = body[body.index(marker):]
-    digest = hashlib.sha256(code.encode("utf-8")).hexdigest()
-    assert digest == SHARED_EVALUATE_SHA256, (
-        f"shared evaluate.py has drifted (sha256 {digest[:16]}...). Change it in "
-        f"phish-drift and re-copy; do not edit it here."
+def test_scoring_comes_from_the_shared_package():
+    """The cross-domain comparison depends on this, so assert it rather than assume.
+
+    Every domain in the study must compute TSS with the SAME code. That used to
+    be enforced by hashing a local copy; now it is enforced structurally, by
+    there being only one copy. This checks the import actually resolves to the
+    installed package and that no local shadow has reappeared.
+    """
+    import benchgap
+
+    assert evaluate.__name__.startswith("benchgap"), (
+        f"evaluate resolved to {evaluate.__name__!r}, not the shared package"
     )
+    shadow = Path(__file__).resolve().parent.parent / "ozonedrift" / "evaluate.py"
+    assert not shadow.exists(), (
+        "a local ozonedrift/evaluate.py has reappeared; it would shadow the "
+        "shared package and silently break cross-domain comparability"
+    )
+    # The functions the study depends on must all be present.
+    for fn in ("score_at", "select_threshold", "peak_tss", "cluster_bootstrap_ci",
+               "paired_difference_ci", "brier_skill"):
+        assert hasattr(evaluate, fn), f"benchgap.evaluate is missing {fn}"
+    print(f"    (benchgap {benchgap.__version__})")
 
 
 def _run_all():

@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-09-20T20:38:14+00:00",
+  "generated_at_utc": "2026-09-21T02:45:26+00:00",
   "tiers": {
     "core": {
-      "generated_at_utc": "2026-09-20T20:38:14+00:00",
+      "generated_at_utc": "2026-09-21T02:45:26+00:00",
       "tier": "core",
       "bootstrap_resamples": 1000,
       "cluster_key": "date",
@@ -420,8 +420,8 @@
         "operational_model": {
           "model_version": 1,
           "label": "core/operational/chronological",
-          "trained_at_utc": "2026-09-20T20:38:22+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:45:33+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -629,8 +629,8 @@
         "random": {
           "model_version": 1,
           "label": "core/benchmark/random",
-          "trained_at_utc": "2026-09-20T20:38:16+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:45:28+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "random",
           "split_sizes": {
@@ -730,8 +730,8 @@
         "chronological": {
           "model_version": 1,
           "label": "core/benchmark/chronological",
-          "trained_at_utc": "2026-09-20T20:38:17+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:45:29+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -831,7 +831,7 @@
       }
     },
     "extended": {
-      "generated_at_utc": "2026-09-20T20:39:21+00:00",
+      "generated_at_utc": "2026-09-21T02:46:30+00:00",
       "tier": "extended",
       "bootstrap_resamples": 1000,
       "cluster_key": "date",
@@ -1249,8 +1249,8 @@
         "operational_model": {
           "model_version": 1,
           "label": "extended/operational/chronological",
-          "trained_at_utc": "2026-09-20T20:39:27+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:46:36+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -1470,8 +1470,8 @@
         "random": {
           "model_version": 1,
           "label": "extended/benchmark/random",
-          "trained_at_utc": "2026-09-20T20:39:23+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:46:31+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "random",
           "split_sizes": {
@@ -1583,8 +1583,8 @@
         "chronological": {
           "model_version": 1,
           "label": "extended/benchmark/chronological",
-          "trained_at_utc": "2026-09-20T20:39:24+00:00",
-          "git_commit": "41b0ff371cab512a7d529ec091e034a14b693636",
+          "trained_at_utc": "2026-09-21T02:46:32+00:00",
+          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {

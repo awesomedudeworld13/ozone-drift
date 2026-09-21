@@ -41,7 +41,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import evaluate
+from benchgap import evaluate
 from .model import PersistenceBaseline, TrainedModel, train
 from .splits import Split, chronological_split, era_gate, random_split
 
