@@ -125,11 +125,12 @@ This is one of several test cases in a study asking: *does a benchmark score ove
 
 Each domain was picked for a **different kind of change between test data and the real world**:
 
-| Domain | What changes | Inflation from shuffling | Real-world drop | Total |
+| Domain | What changes between testing and the real world | Inflation from shuffling | Real-world drift | **Total** |
 |---|---|---|---|---|
-| **Ozone** (this repo) | seasons and weather — nothing adversarial | +0.215 | **−0.077** | **+0.138** |
+| **Ozone / smog** (this repo) | seasons and weather — nothing adversarial | +0.215 | **−0.077** | **+0.138** |
 | [Solar flares](https://github.com/solarflarepredictor-cmd/SolarFlarePredictor) | the Sun's 11-year cycle | +0.118 | +0.107 | **+0.225** |
-| [Phishing URLs](https://github.com/awesomedudeworld13/phish-drift) | attackers actively adapting, plus a broken dataset | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
+| [Geomagnetic storms](https://github.com/solarflarepredictor-cmd/SolarFlarePredictor) | multi-day space-weather disturbances | +0.325 | +0.071 | **+0.396** |
+| [Phishing URLs](https://github.com/awesomedudeworld13/phish-drift) | attackers adapting, plus broken datasets | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
 
 Ozone is the **control**. Nothing here is fighting back: the atmosphere in 2026 follows the same chemistry it followed in 2016, no one is trying to evade a smog forecast, and the monitoring network is stable and public.
 

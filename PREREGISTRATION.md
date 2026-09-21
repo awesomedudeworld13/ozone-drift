@@ -132,9 +132,24 @@ protocol, using a copy of the same `evaluate.py`, and reports a total of
 | solar flares | solar cycle | +0.118 | +0.107 | **+0.225** |
 | phishing | adversarial + dataset construction | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
 
-ozone < solar < phishing, as predicted. The geomagnetic-storm model has not yet
-been run through this protocol, so that part of the ordering remains untested
-and no claim is made about it.
+**All four positions now measured, and the full predicted ordering holds:**
+
+| domain | kind of shift | inflation from shuffling | real-world drift | total |
+|---|---|---|---|---|
+| ozone | seasonal, physical | +0.215 | **-0.077** | **+0.138** |
+| solar flares | solar cycle | +0.118 | +0.107 | **+0.225** |
+| geomagnetic storms | multi-day disturbances | +0.325 | +0.071 | **+0.396** |
+| phishing | adversarial + dataset construction | +0.0001 to +0.088 | +0.009 | **+0.508 to +0.996** |
+
+ozone < solar < storms < phishing -- exactly as O4 predicted, on numbers that
+are comparable because all four now score with the same `benchgap` code.
+
+The storm result was the last one measured and could have broken the ordering
+at any of three places; it did not. Storms also turned out to carry the largest
+shuffling artifact of any domain (+0.325), which was not predicted: a
+geomagnetic storm is a multi-day event sampled every three hours, so one storm
+yields dozens of near-identical windows for a random split to scatter across
+training and test.
 
 Note the *drift* column orders the same way and is arguably the cleaner test of
 the hypothesis, since it excludes the shuffling artifact entirely: ozone −0.077,
