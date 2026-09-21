@@ -68,10 +68,28 @@
   a:hover { text-decoration: underline; }
   code { font-family: var(--mono); font-size: .88em; }
   select { font: inherit; padding: .4rem .6rem; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--ink); }
+
+  .domains { display: flex; flex-wrap: wrap; gap: .15rem; align-items: center;
+             border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+  .domains a { padding: .55rem .8rem; font-size: .88rem; color: var(--muted);
+               text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .domains a:hover { color: var(--ink); text-decoration: none; }
+  .domains a[aria-current="page"] { color: var(--ink); font-weight: 600;
+                                    border-bottom-color: var(--accent); }
+  .domains .tag { margin-left: auto; font-size: .74rem; color: var(--muted);
+                  letter-spacing: .05em; text-transform: uppercase; padding: 0 .2rem; }
+  @media (max-width: 560px) { .domains .tag { display: none; } }
 </style>
+<script src="charts.js"></script>
 </head>
 <body>
 <div class="wrap">
+  <nav class="domains" aria-label="Domains in this study">
+      <a href="https://awesomedudeworld13.github.io/phish-drift/">Phishing URLs</a>
+      <a href="https://awesomedudeworld13.github.io/ozone-drift/" aria-current="page">Houston smog</a>
+      <a href="https://awesomedudeworld-helios.hf.space/">Solar flares &amp; storms</a>
+      <span class="tag">one study · one scoring code</span>
+  </nav>
   <header>
     <h1>ozone-drift</h1>
     <p class="sub">When a machine-learning model scores well on a test set, does that score still hold up once the model is used for real? Houston smog forecasting — the control case in a multi-domain study.</p>
@@ -82,7 +100,6 @@
     Generated from <code>results.json</code>, rebuilt from the raw EPA files by script.
     Nothing on this page is hand-entered.
     <br><a href="https://github.com/awesomedudeworld13/ozone-drift">Source and method</a>
-    · <a href="https://awesomedudeworld13.github.io/phish-drift/">phishing domain</a>
   </footer>
 </div>
 <script>
@@ -92,14 +109,19 @@ const num = (v, d = 3) => (v === undefined || v === null || Number.isNaN(v)) ? "
 const sgn = (v, d = 3) => (v === undefined || v === null) ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(d);
 
 const CELL = {
-  cell1_benchmark_random:        ["Shuffle the days randomly", "what most published papers do"],
-  cell2_benchmark_chronological: ["Train on earlier days, test on later", "the honest way to test a forecast"],
-  cell3_operational:             ["Run it on 2022–2025", "years it never saw — actual deployment"],
+  cell1_benchmark_random:        ["Shuffle the days randomly", "what most published papers do", "Shuffled days"],
+  cell2_benchmark_chronological: ["Train on earlier days, test on later", "the honest way to test a forecast", "Earlier → later"],
+  cell3_operational:             ["Run it on 2022–2025", "years it never saw — actual deployment", "Real-world years"],
 };
 const STEP = {
   temporal_leakage:  "Shuffled testing → honest testing",
   operational_drift: "Honest testing → real-world years",
   total:             "Total",
+};
+// Shorter forms for chart axes, where the full sentence wraps off the end.
+const STEP_SHORT = {
+  temporal_leakage:  "Stop shuffling",
+  operational_drift: "Move to real years",
 };
 
 function table(head, rows) {
@@ -137,8 +159,75 @@ function renderTier(r) {
     })
   ));
 
+  const order = ["cell1_benchmark_random", "cell2_benchmark_chronological", "cell3_operational"];
+  const present = order.filter(k => cells[k]);
+  if (present.length >= 2) {
+    const pts = present.map(k => cells[k].operating_points.tss);
+    const spread = pts.flatMap(s => [s.tss, ...(s.tss_ci95 || [])]);
+    out.push(chartBars({
+      items: present.map((k, i) => {
+        const s = pts[i], meta = CELL[k] || [k, ""];
+        return { label: meta[2] || meta[0], sub: `n = ${cells[k].n.toLocaleString()}`,
+                 value: s.tss, ci: s.tss_ci95,
+                 tone: k === "cell1_benchmark_random" ? "bad" : "accent" };
+      }),
+      domain: [Math.min(0, ...spread) - 0.05, Math.max(1, ...spread) + 0.05],
+      yLabel: "TSS", height: 320, slot: 130,
+      aria: "TSS under each testing protocol, with confidence intervals",
+      caption: `Whiskers are 95% ranges from ${r.bootstrap_resamples.toLocaleString()} bootstrap
+        resamples that resample <strong>whole days</strong>, not station-days. When ozone spikes it
+        spikes across most of the 17 stations at once, so resampling rows independently would count
+        one weather event as seventeen observations and report a range far tighter than the evidence
+        supports. The shuffled bar is red because it is the number that isn't real.`,
+    }));
+
+    out.push(chartScatter({
+      points: present.map((k, i) => {
+        const s = pts[i], meta = CELL[k] || [k, ""];
+        return { x: s.false_alarm_rate, y: s.recall,
+                 label: `${meta[2] || meta[0]} · TSS ${num(s.tss)}`,
+                 tone: k === "cell1_benchmark_random" ? "bad" : "accent" };
+      }),
+      xLabel: "false-alarm rate — clean days warned on",
+      yLabel: "recall — smog days caught",
+      aria: "recall against false-alarm rate for each protocol",
+      caption: `What the forecaster actually does, rather than one summary number. Up and to the
+        left is useful; the dashed diagonal is a coin flip. At the TSS operating point this model
+        is tuned to catch nearly every smog day and accept a real false-alarm rate for it — the
+        right trade for a health warning, where a missed smog day costs more than an unnecessary
+        one. The three points sit close together, which <em>is</em> the result: honest testing and
+        real deployment land in nearly the same place.`,
+    }));
+  }
+
   if (Object.keys(at).length) {
     out.push(`<h2>Where the skill went</h2>`);
+    const tssOf = (k) => cells[k] && cells[k].operating_points.tss.tss;
+    if (cells.cell1_benchmark_random && cells.cell3_operational) {
+      const items = [{ label: "Shuffled score", sub: "the published protocol",
+                       value: tssOf("cell1_benchmark_random"), tone: "bad" }];
+      for (const st of (r.attribution_steps || [])) {
+        if (!cells[st.from] || !cells[st.to]) continue;
+        items.push({
+          label: STEP_SHORT[st.step] || STEP[st.step] || st.step,
+          value: tssOf(st.to), from: tssOf(st.from),
+          tone: tssOf(st.to) < tssOf(st.from) ? "bad" : "good",
+          display: sgn(tssOf(st.to) - tssOf(st.from)),
+        });
+      }
+      items.push({ label: "What survives", sub: "real-world years",
+                   value: tssOf("cell3_operational"), tone: "accent" });
+      out.push(chartBars({
+        items, yLabel: "TSS", height: 320, slot: 130,
+        domain: [0, Math.max(1, tssOf("cell1_benchmark_random")) + 0.05],
+        aria: "waterfall of TSS lost at each step",
+        caption: `Each floating bar changes <strong>exactly one thing</strong>, which is what
+          makes the loss attributable rather than merely observed. Nearly all of it is the first
+          step — the testing habit — and the second step runs <span class="good">upward</span>:
+          the model scored better on years it had never seen than on its own held-out test.`,
+      }));
+    }
+
     const tot = Math.abs(at.total || 1);
     out.push(table(
       [{label:"Step"}, {label:"Change in TSS", num:true}, {label:""}],
@@ -167,6 +256,23 @@ function renderTier(r) {
          {text:num(g("D_operational_trained_on_operational")), cls:"strong"}],
       ]
     ));
+    out.push(chartBars({
+      items: [
+        { label: "Older data", sub: "on benchmark years", value: g("A_benchmark_trained_on_benchmark"), tone: "muted" },
+        { label: "Newer data", sub: "on benchmark years", value: g("C_operational_trained_on_benchmark"), tone: "muted" },
+        { label: "Older data", sub: "on recent years", value: g("B_benchmark_trained_on_operational"), tone: "accent",
+          ci: (c.B_benchmark_trained_on_operational.operating_points.tss || {}).tss_ci95 },
+        { label: "Newer data", sub: "on recent years", value: g("D_operational_trained_on_operational"), tone: "bad",
+          ci: (c.D_operational_trained_on_operational.operating_points.tss || {}).tss_ci95 },
+      ],
+      yLabel: "TSS", height: 300, slot: 118, domain: [0, 0.85],
+      aria: "TSS by training era and test era",
+      caption: `The comparison that matters is the right-hand pair: <strong>the same recent test
+        days</strong>, scored by a model trained on older data and by one trained on newer data.
+        The newer model is worse. The instinct that a degrading model just needs fresher data is
+        wrong here, and the interval below says so with enough confidence to report it.`,
+    }));
+
     const dir = lt.recovery_direction;
     out.push(`<p>Change from retraining: <span class="strong ${dir === "harms" ? "bad" : dir === "improves" ? "good" : ""}">${sgn(lt.recovery_D_minus_B)}</span>
       (95% range ${num(lt.recovery_ci95[0])} – ${num(lt.recovery_ci95[1])}) — <strong>${esc(dir)}</strong>.</p>`);
@@ -178,6 +284,21 @@ function renderTier(r) {
     out.push(`<h2>Is the model actually doing anything?</h2>`);
     out.push(`<p class="note">The cheap forecast is <strong>"tomorrow will be like today"</strong> — no machine
       learning, just repeat today's reading. A model that can't beat it has demonstrated nothing.</p>`);
+    out.push(chartBars({
+      items: Object.entries(pb).flatMap(([k, pp]) => {
+        const ours = k === "operational" ? cells.cell3_operational : cells.cell2_benchmark_chronological;
+        const where = k === "operational" ? "real-world years" : "benchmark test";
+        return [
+          { label: "Tomorrow = today", sub: where, value: pp.operating_points.tss.tss, tone: "muted" },
+          { label: "Our model", sub: where, value: ours ? ours.operating_points.tss.tss : null, tone: "accent" },
+        ];
+      }),
+      yLabel: "TSS", height: 280, slot: 118, domain: [0, 0.85],
+      aria: "model against the persistence baseline",
+      caption: `A model that cannot beat "repeat today's reading" has demonstrated nothing, so
+        this is the check that keeps the rest of the page meaningful. It clears the baseline on
+        both sets of years by a wide margin.`,
+    }));
     out.push(table(
       [{label:"Scored on"}, {label:"Station-days", num:true}, {label:'"Tomorrow = today"', num:true}, {label:"Our model", num:true}],
       Object.entries(pb).map(([k, p]) => {
@@ -190,6 +311,27 @@ function renderTier(r) {
         ];
       })
     ));
+  }
+
+  const mc = r.models && (r.models.chronological || r.models.random);
+  if (mc && mc.top_features) {
+    const sz = mc.split_sizes || {};
+    out.push(`<h2>What the model learned</h2>`);
+    out.push(`<p>A random forest of ${mc.hyperparameters.n_estimators} trees over
+      ${r.n_features} inputs, all of them available the evening before the day being forecast —
+      no same-day ozone reading, no future weather. Trained on
+      ${((sz.train || {}).rows || 0).toLocaleString()} station-days, warning cutoff frozen on a
+      separate ${((sz.val || {}).rows || 0).toLocaleString()}, scored on
+      ${((sz.test || {}).rows || 0).toLocaleString()} later ones.</p>`);
+    out.push(chartBarsH({
+      items: mc.top_features.slice(0, 10).map(f => ({ label: f.name, value: f.importance })),
+      aria: "feature importance",
+      caption: `How much each input contributed to the forest's decisions. Today's ozone level,
+        the time of year and wind direction lead — which is what an atmospheric chemist would
+        expect, and the reassuring answer: the model has latched onto the physics rather than
+        onto an accident of how the data was assembled. Compare the phishing domain, where the
+        same chart shows a model that learned the <em>dataset</em>.`,
+    }));
   }
 
   const eg = r.era_gate;
@@ -208,6 +350,23 @@ function renderTier(r) {
         ]);
       }
     }
+    const years = [...eg.benchmark.years.map(y => ({ ...y, era: "benchmark" })),
+                   ...eg.operational.years.map(y => ({ ...y, era: "operational" }))];
+    out.push(chartBars({
+      items: years.map(y => ({
+        label: String(y.year), sub: y.era === "benchmark" ? "trained on" : "real-world",
+        value: y.positives, display: String(y.positives),
+        tone: y.positives === 0 ? "bad" : (y.era === "benchmark" ? "muted" : "accent"),
+      })),
+      fmt: v => String(Math.round(v)), yLabel: "smog days", height: 290, slot: 82,
+      aria: "exceedance days per year",
+      caption: `This chart grows: each year EPA publishes adds a bar, and the real-world era
+        extends. The gap is 2020–2021, excluded before any modelling because pandemic traffic
+        collapse makes them a different world rather than a later one. A year with
+        <strong>zero</strong> smog days cannot be scored at all — TSS is undefined when nothing
+        happened — so eras containing one are rejected up front, which is a property of the data
+        and checkable before a model exists.`,
+    }));
     out.push(table([{label:"Era"}, {label:"Year"}, {label:"Station-days", num:true},
                     {label:"Smog days", num:true}, {label:"Rate", num:true}], rows));
   }
