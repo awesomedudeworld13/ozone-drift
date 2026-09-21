@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ozone-drift</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --panel: #ffffff; --line: #e3e2df;
+    --ink: #1c1b19; --muted: #6b6963; --accent: #0e7490;
+    --good: #15803d; --bad: #b91c1c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141514; --panel: #1c1e1d; --line: #2e3230;
+      --ink: #eceae5; --muted: #98a09c; --accent: #38bdf8;
+      --good: #4ade80; --bad: #f87171;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141514; --panel: #1c1e1d; --line: #2e3230;
+    --ink: #eceae5; --muted: #98a09c; --accent: #38bdf8;
+    --good: #4ade80; --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 1.75rem; margin-bottom: 2.25rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 .4rem; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0; font-size: .95rem; }
+  .stamp { color: var(--muted); font-size: .8rem; font-family: var(--mono); margin-top: .9rem; }
+  h2 {
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--muted); font-weight: 600;
+    margin: 2.6rem 0 .9rem; padding-bottom: .5rem; border-bottom: 1px solid var(--line);
+  }
+  p { margin: 0 0 1rem; }
+  .note { color: var(--muted); font-size: .88rem; }
+  .headline {
+    background: var(--panel); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 6px;
+    padding: 1.25rem 1.4rem; margin-bottom: .75rem;
+  }
+  .headline .big {
+    font-family: var(--mono); font-size: 2rem; font-weight: 600;
+    letter-spacing: -.02em; display: block; margin-bottom: .2rem;
+  }
+  .headline .cap { color: var(--muted); font-size: .9rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .75rem; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: .75rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 520px; }
+  th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--line); }
+  th { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: none; }
+  .strong { font-weight: 600; } .good { color: var(--good); } .bad { color: var(--bad); }
+  .dim { color: var(--muted); }
+  .bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .bar > i.neg { background: var(--good); }
+  footer { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: .88em; }
+  select { font: inherit; padding: .4rem .6rem; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ozone-drift</h1>
+    <p class="sub">When a machine-learning model scores well on a test set, does that score still hold up once the model is used for real? Houston smog forecasting — the control case in a multi-domain study.</p>
+    <p class="stamp" id="stamp">loading…</p>
+  </header>
+  <main id="main"></main>
+  <footer>
+    Generated from <code>results.json</code>, rebuilt from the raw EPA files by script.
+    Nothing on this page is hand-entered.
+    <br><a href="https://github.com/awesomedudeworld13/ozone-drift">Source and method</a>
+    · <a href="https://awesomedudeworld13.github.io/phish-drift/">phishing domain</a>
+  </footer>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = (v, d = 3) => (v === undefined || v === null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+const sgn = (v, d = 3) => (v === undefined || v === null) ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(d);
+
+const CELL = {
+  cell1_benchmark_random:        ["Shuffle the days randomly", "what most published papers do"],
+  cell2_benchmark_chronological: ["Train on earlier days, test on later", "the honest way to test a forecast"],
+  cell3_operational:             ["Run it on 2022–2025", "years it never saw — actual deployment"],
+};
+const STEP = {
+  temporal_leakage:  "Shuffled testing → honest testing",
+  operational_drift: "Honest testing → real-world years",
+  total:             "Total",
+};
+
+function table(head, rows) {
+  return `<div class="scroll"><table><thead><tr>${
+    head.map(h => `<th class="${h.num ? "num" : ""}">${esc(h.label)}</th>`).join("")
+  }</tr></thead><tbody>${
+    rows.map(r => `<tr>${r.map((c, i) =>
+      `<td class="${head[i].num ? "num" : ""} ${c.cls || ""}">${c.html ?? esc(c.text ?? c)}</td>`).join("")}</tr>`).join("")
+  }</tbody></table></div>`;
+}
+
+function renderTier(r) {
+  const out = [];
+  const cells = r.cells || {};
+  const at = (r.attribution_tss || {}).tss || {};
+
+  out.push(`<p class="note">${r.n_features} inputs · benchmark years
+    ${r.benchmark_years[0]}–${r.benchmark_years.at(-1)} · real-world years
+    ${r.operational_years[0]}–${r.operational_years.at(-1)} ·
+    ${r.bootstrap_resamples.toLocaleString()} resamples grouped by day</p>`);
+
+  out.push(`<h2>The three tests</h2>`);
+  out.push(table(
+    [{label:"How we tested it"}, {label:"Station-days", num:true}, {label:"Smog-day rate", num:true},
+     {label:"TSS", num:true}, {label:"95% range", num:true}],
+    Object.entries(cells).map(([k, c]) => {
+      const s = c.operating_points.tss || {};
+      const meta = CELL[k] || [k, ""];
+      const ci = s.tss_ci95 ? `${num(s.tss_ci95[0])} – ${num(s.tss_ci95[1])}` : "—";
+      return [
+        {html:`<span class="strong">${esc(meta[0])}</span><br><span class="dim">${esc(meta[1])}</span>`},
+        {text:c.n.toLocaleString()}, {text:num(c.base_rate, 4)},
+        {text:num(s.tss), cls:"strong"}, {text:ci, cls:"dim"},
+      ];
+    })
+  ));
+
+  if (Object.keys(at).length) {
+    out.push(`<h2>Where the skill went</h2>`);
+    const tot = Math.abs(at.total || 1);
+    out.push(table(
+      [{label:"Step"}, {label:"Change in TSS", num:true}, {label:""}],
+      Object.entries(at).filter(([k]) => k !== "total").map(([k, v]) => [
+        {text: STEP[k] || k},
+        {text: sgn(v), cls: v > 0 ? "strong bad" : "strong good"},
+        {html: `<div class="bar"><i class="${v < 0 ? "neg" : ""}" style="width:${Math.min(100, Math.abs(v)/tot*100).toFixed(1)}%"></i></div>`},
+      ]).concat([[{text:"Total", cls:"strong"}, {text:sgn(at.total), cls:"strong"}, {html:""}]])
+    ));
+    out.push(`<p class="note">A <span class="good">negative</span> real-world step means the model scored
+      <em>better</em> on years it had never seen than on its own held-out test — which is what an honest
+      benchmark looks like.</p>`);
+  }
+
+  const lt = r.live_training;
+  if (lt && lt.cells) {
+    const c = lt.cells;
+    const g = (k) => c[k].operating_points.tss.tss;
+    out.push(`<h2>Does retraining on newer data help?</h2>`);
+    out.push(table(
+      [{label:"Model trained on"}, {label:"Scored on benchmark years", num:true}, {label:"Scored on recent years", num:true}],
+      [
+        [{text:"Older data (benchmark era)"}, {text:num(g("A_benchmark_trained_on_benchmark"))},
+         {text:num(g("B_benchmark_trained_on_operational")), cls:"strong"}],
+        [{text:"Newer data (recent era)"}, {text:num(g("C_operational_trained_on_benchmark"))},
+         {text:num(g("D_operational_trained_on_operational")), cls:"strong"}],
+      ]
+    ));
+    const dir = lt.recovery_direction;
+    out.push(`<p>Change from retraining: <span class="strong ${dir === "harms" ? "bad" : dir === "improves" ? "good" : ""}">${sgn(lt.recovery_D_minus_B)}</span>
+      (95% range ${num(lt.recovery_ci95[0])} – ${num(lt.recovery_ci95[1])}) — <strong>${esc(dir)}</strong>.</p>`);
+    if (lt.answer) out.push(`<p class="note">${esc(lt.answer)}</p>`);
+  }
+
+  const pb = r.persistence_baseline;
+  if (pb) {
+    out.push(`<h2>Is the model actually doing anything?</h2>`);
+    out.push(`<p class="note">The cheap forecast is <strong>"tomorrow will be like today"</strong> — no machine
+      learning, just repeat today's reading. A model that can't beat it has demonstrated nothing.</p>`);
+    out.push(table(
+      [{label:"Scored on"}, {label:"Station-days", num:true}, {label:'"Tomorrow = today"', num:true}, {label:"Our model", num:true}],
+      Object.entries(pb).map(([k, p]) => {
+        const ours = k === "operational" ? cells.cell3_operational : cells.cell2_benchmark_chronological;
+        return [
+          {text: k === "operational" ? "Real-world years" : "Benchmark test"},
+          {text: p.n.toLocaleString()},
+          {text: num(p.operating_points.tss.tss)},
+          {text: num(ours ? ours.operating_points.tss.tss : null), cls:"strong good"},
+        ];
+      })
+    ));
+  }
+
+  const eg = r.era_gate;
+  if (eg) {
+    out.push(`<h2>Smog days per year</h2>`);
+    out.push(`<p class="note">Checked before any model was built. A year with zero smog days can't be scored
+      at all, so eras containing one are rejected up front.</p>`);
+    const rows = [];
+    for (const era of ["benchmark", "operational"]) {
+      for (const y of eg[era].years) {
+        rows.push([
+          {text: era === "benchmark" ? "benchmark" : "real-world", cls:"dim"},
+          {text: String(y.year)}, {text: y.rows.toLocaleString()},
+          {text: String(y.positives), cls: y.positives === 0 ? "strong bad" : ""},
+          {text: num(y.base_rate, 4)},
+        ]);
+      }
+    }
+    out.push(table([{label:"Era"}, {label:"Year"}, {label:"Station-days", num:true},
+                    {label:"Smog days", num:true}, {label:"Rate", num:true}], rows));
+  }
+  return out.join("");
+}
+
+function render(doc) {
+  const tiers = Object.keys(doc.tiers || {});
+  $("#stamp").textContent = `generated ${doc.generated_at_utc} · ${tiers.length} feature sets`;
+
+  const core = doc.tiers.core || doc.tiers[tiers[0]];
+  const at = (core.attribution_tss || {}).tss || {};
+  const c = core.cells || {};
+
+  const head = `<div class="grid">
+    <div class="headline">
+      <span class="big bad">${sgn(at.temporal_leakage)}</span>
+      <span class="cap">TSS lost when you stop <strong>shuffling the days</strong><br>
+      — testing sloppily inflates the score by this much</span>
+    </div>
+    <div class="headline">
+      <span class="big good">${sgn(at.operational_drift)}</span>
+      <span class="cap">TSS lost moving to <strong>years it never saw</strong><br>
+      — negative means it got <em>better</em></span>
+    </div>
+  </div>
+  <p style="margin-top:1rem">Almost the entire apparent drop-off comes from one careless testing habit, not
+  from the world changing. Once the model is tested honestly — trained on earlier days, tested on later ones —
+  it scores <strong>${num(c.cell3_operational ? c.cell3_operational.operating_points.tss.tss : null)}</strong>
+  on 2022–2025, versus <strong>${num(c.cell2_benchmark_chronological ? c.cell2_benchmark_chronological.operating_points.tss.tss : null)}</strong>
+  on its own held-out test.</p>
+  <p class="note"><strong>TSS</strong> = (fraction of real smog days caught) − (fraction of clean days falsely
+  alarmed on). It is <strong>0 for a model with no skill</strong> and 1 for a perfect one. We avoid accuracy:
+  smog days are ~2% of days, so a model that always says "no smog" is 98% accurate and useless.</p>`;
+
+  const picker = tiers.length > 1
+    ? `<h2>Feature set</h2><p><label>Showing
+       <select id="pick">${tiers.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select>
+       </label> <span class="note">— <code>core</code> uses temperature and wind across 17 stations;
+       <code>extended</code> adds humidity but only 7 stations report it. Both are always reported, so neither
+       can be cherry-picked after the fact.</span></p>`
+    : "";
+
+  $("#main").innerHTML = head + picker + `<div id="detail"></div>`;
+  const show = (t) => { $("#detail").innerHTML = renderTier(doc.tiers[t]); };
+  if (tiers.length > 1) $("#pick").addEventListener("change", e => show(e.target.value));
+  show(doc.tiers.core ? "core" : tiers[0]);
+}
+
+fetch("results.json", { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(`results.json → HTTP ${r.status}`); return r.json(); })
+  .then(render)
+  .catch(err => {
+    $("#stamp").textContent = "";
+    $("#main").innerHTML = `<div class="headline"><strong>Could not load results</strong>
+      <p class="note">${esc(err.message)} — run <code>python -m ozonedrift.cli report</code>.</p></div>`;
+  });
+</script>
+</body>
+</html>

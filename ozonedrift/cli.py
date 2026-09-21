@@ -98,7 +98,17 @@ def cmd_report(args) -> int:
               flush=True)
 
     gap.write(by_tier, RESULTS_DIR, RESULTS_MD)
-    print(f"\n[report] -> results/*.json, RESULTS.md")
+
+    # Feed the static dashboard. One combined file, so the page needs a single
+    # fetch and can never render a half-updated mix of tiers.
+    docs = ROOT / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    (docs / "results.json").write_text(json.dumps({
+        "generated_at_utc": next(iter(by_tier.values()))["generated_at_utc"],
+        "tiers": by_tier,
+    }, indent=2), encoding="utf-8")
+
+    print(f"\n[report] -> results/*.json, RESULTS.md, docs/results.json")
     return 0
 
 
