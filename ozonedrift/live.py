@@ -129,7 +129,10 @@ def run(now: datetime | None = None) -> dict:
 
     # 2) forecast day+1 from day's features (once per feature day)
     issued = 0
-    if str(day) not in done_days and len(feats):
+    target_noon_utc = datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc) + timedelta(days=1) - LST
+    if now >= target_noon_utc:                            # never "forecast" a day already half over
+        summary["skipped"] = "too late: target day is past 12:00 LST"
+    elif str(day) not in done_days and len(feats):
         F = joblib.load(OUT / "models" / "F_core.joblib")
         M = joblib.load(OUT / "models" / "main_benchmark_core.joblib")
         need = sorted(set(F.feature_names) | set(M.feature_names))

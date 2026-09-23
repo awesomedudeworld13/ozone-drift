@@ -111,4 +111,11 @@ prediction, in `testing_new/RESULTS.md`.
 
 ## Deviations
 
-(none yet)
+**D1 (2026-09-23 03:0x UTC): late manual run.** The first run was triggered by
+hand at 21:00 CST on 2026-09-22, so its 16 "forecasts" (feature day 09-21,
+target 09-22) were issued after the target day was over. They were removed
+from `live_forecasts.csv`. AirNow features for 09-21 stay in
+`live_features.csv`, since those are observations, not forecasts. `live.py`
+now refuses to issue once the target day is past 12:00 LST. The scheduled
+07:30 CST run was always inside that limit. The live record starts with the
+first scheduled run.
