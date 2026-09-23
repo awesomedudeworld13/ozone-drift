@@ -6,7 +6,13 @@ name: testing-new-live
 
 on:
   schedule:
-    - cron: "30 13 * * *"      # 07:30 CST: yesterday's 8-h ozone is complete, today's peak is hours away
+    # Three tries a day; the job skips a day it has already forecast, so extras are free.
+    # GitHub often starts scheduled runs hours late, and live.py refuses to forecast after
+    # 12:00 LST, so one start time alone can lose a day. Earliest useful: 12:00 UTC, when
+    # yesterday's last 8-hour ozone average is complete.
+    - cron: "10 12 * * *"      # 06:10 CST
+    - cron: "30 13 * * *"      # 07:30 CST
+    - cron: "10 14 * * *"      # 08:10 CST
   workflow_dispatch:
 
 permissions:
