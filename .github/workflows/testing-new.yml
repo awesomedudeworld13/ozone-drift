@@ -1,0 +1,53 @@
+# Runs the testing-new branch's live ozone forecaster once a day and commits
+# its record back to THAT branch. It lives on main only because GitHub fires
+# `schedule` triggers from the default branch; it reads and writes nothing on
+# main. See testing_new/PREREGISTRATION.md on the testing-new branch.
+name: testing-new-live
+
+on:
+  schedule:
+    - cron: "30 13 * * *"      # 07:30 CST: yesterday's 8-h ozone is complete, today's peak is hours away
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: testing-new-live
+  cancel-in-progress: false
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: testing-new
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install --quiet -r requirements.txt
+
+      - name: Forecast, verify, score
+        run: python -m ozonedrift.live
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add testing_new/live_forecasts.csv testing_new/live_features.csv testing_new/live_score.json
+          if git diff --cached --quiet; then
+            echo "Nothing new today."
+            exit 0
+          fi
+          git commit -m "testing-new: live ozone forecasts $(date -u +%F)"
+          for attempt in 1 2 3; do
+            git pull --rebase origin testing-new && git push origin HEAD:testing-new && exit 0
+            sleep 5
+          done
+          exit 1
