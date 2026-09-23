@@ -79,3 +79,38 @@ AirNow's keyless files (`live_forecasts.csv`).
    recency matters more than volume for this airshed.
 3. Treat persistence as the bar to beat. On this test nothing clearly
    clears it, which is itself a finding for the "benchmark vs reality" paper.
+
+## Early live observation (2026-09-23, first scheduled run): F over-warns
+
+Recorded on day 1 of the live test, before any forecast was verified. **No
+change was made**: the model and threshold stay frozen as pre-registered.
+
+- **Live inputs match EPA's data.** AirNow-derived features for 2026-09-21/22
+  sit inside the range of EPA's AQS values for September 2025. For example,
+  mean daily temperature is 85.8 °F live vs 81.6 °F in AQS Sep 2025, and
+  o3_max8h averages 0.053 vs 0.052 ppm. The live pipeline is not the problem.
+- **F flags almost everything.** On the first 16 site forecasts, F gave
+  P(exceedance) of 0.10–0.90 (most 0.6–0.9); main's benchmark model gave
+  0.01–0.15. With F's frozen TSS threshold of 0.121, nearly every site is a
+  "yes".
+- **It's the model, not the live data.** On EPA's own September 2025 data,
+  which F even trained on, F's mean probability is 0.56 and **85% of
+  site-days clear its threshold, against a 10% exceedance rate.**
+- **Why:**
+  1. The threshold was chosen on the common validation window (Oct 2024 to
+     May 2025), which is mostly outside ozone season, so the TSS-best cutoff
+     came out very low.
+  2. F is gradient boosting trained with `class_weight="balanced"`, which
+     inflates predicted probabilities for the rare exceedance class. Its
+     probabilities are therefore not calibrated.
+- **What to expect at the 30/60-day checks:** high recall with many false
+  alarms. The pre-registered Brier comparison (L1) will very likely favour
+  main's model; TSS may still be respectable when exceedances occur, since TSS
+  rewards catching them.
+- **Reading:** the variant that won on validation and on the retrospective
+  test becomes an over-warning forecaster in live use. That is the
+  benchmark-versus-deployment gap this project studies, appearing inside our
+  own pipeline, and it's reported as a result rather than patched. The fix
+  (in-season threshold selection and probability calibration, e.g. isotonic
+  on in-season validation) belongs in the next pre-registration.
+
