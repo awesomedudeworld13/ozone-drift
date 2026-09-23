@@ -239,11 +239,16 @@ def run(frame: pd.DataFrame, feature_names, benchmark_years, operational_years,
             f"operational test rows (95% CI {lo:.3f}..{hi:.3f}). "
             + {
                 "improves": "The interval excludes zero above, so it measurably helps.",
-                "harms": "The interval excludes zero BELOW, so training on the newer "
-                         "era measurably HURT — the benchmark-era model generalises to "
-                         "deployment better than a model fitted on deployment-era data. "
-                         "The loss is not a training-data problem, and collecting more "
-                         "recent data would not fix it.",
+                "harms": "The interval excludes zero below, so at these frozen cutoffs "
+                         "the newer-era model scored worse. Two things limit what that "
+                         "means. The newer-era model trained on fewer days, so era and "
+                         "amount of data are confounded. And each model's cutoff was "
+                         "chosen on a different validation window, so part of the "
+                         "difference is how well a cutoff transfers rather than how well "
+                         "the model ranks days; compare the threshold-free peak TSS of "
+                         "cells B and D. A follow-up that fixes the window and varies "
+                         "only the training data found no era effect at equal size "
+                         "(testing-new branch, Z1).",
                 "inconclusive": "The interval includes zero, so on this much data no "
                                 "effect can be claimed either way.",
             }[direction]
@@ -258,6 +263,33 @@ def run(frame: pd.DataFrame, feature_names, benchmark_years, operational_years,
                          n_resamples).to_dict()
         for k, f in (("benchmark_test", split_chron.test), ("operational", oper))
     }
+
+    # The row above warns only when today already broke the 70 ppb limit. That is
+    # the classical persistence forecast, but it is not a fair opponent: the model
+    # gets a cutoff tuned on validation and persistence gets none. Give persistence
+    # the same treatment -- one cutoff on today's ozone, chosen on the same
+    # validation days -- so the comparison is like for like.
+    persist_thr = evaluate.select_threshold(
+        split_chron.val.y.to_numpy(), PersistenceBaseline.predict_proba(split_chron.val), "tss")
+    results["persistence_tuned"] = {
+        k: evaluate_cell(k, "Persistence with its cutoff chosen on validation, like the model's.",
+                         PersistenceBaseline, f, {"tss": persist_thr}, n_resamples).to_dict()
+        for k, f in (("benchmark_test", split_chron.test), ("operational", oper))
+    }
+    ours = {"benchmark_test": split_chron.test, "operational": oper}
+    results["model_vs_persistence"] = {}
+    for k, f in ours.items():
+        y = f.y.to_numpy()
+        days = f.date.dt.strftime("%Y-%m-%d").to_numpy()
+        d, lo_p, hi_p = evaluate.paired_difference_ci(
+            y, model_chron.predict_proba(f), model_chron.thresholds["tss"],
+            y, PersistenceBaseline.predict_proba(f), persist_thr,
+            groups_a=days, groups_b=days, n_resamples=n_resamples)
+        results["model_vs_persistence"][k] = {
+            "model_minus_tuned_persistence_tss": round(d, 6),
+            "ci95": [round(lo_p, 6), round(hi_p, 6)],
+            "persistence_threshold_ppm": round(persist_thr * 2 * 0.070, 5),
+        }
 
     results["models"] = {"random": model_rand.metadata, "chronological": model_chron.metadata}
     return results
@@ -338,11 +370,18 @@ def render_markdown(by_tier: dict) -> str:
         a("### Persistence baseline\n")
         a("*\"Tomorrow looks like today.\" A model that does not clear this has "
           "demonstrated nothing about forecasting.*\n")
-        a("| evaluated on | n | TSS | peak TSS |")
-        a("|---|---|---|---|")
+        a("| evaluated on | n | TSS, warn only if today > 70 ppb | TSS, cutoff tuned on validation | peak TSS |")
+        a("|---|---|---|---|---|")
         for key, p in r["persistence_baseline"].items():
+            t = r["persistence_tuned"][key]
             a(f"| {key} | {p['n']:,} | {_fmt(p['operating_points']['tss']['tss'])} "
-              f"| {_fmt(p['peak_tss'])} |")
+              f"| {_fmt(t['operating_points']['tss']['tss'])} | {_fmt(p['peak_tss'])} |")
+        a("")
+        a("Model minus tuned persistence on the same rows (date-clustered; the two sides are resampled independently, so the interval is conservative):" + chr(10))
+        for key, m in r["model_vs_persistence"].items():
+            a(f"- {key}: {m['model_minus_tuned_persistence_tss']:+.3f} "
+              f"(95% CI {m['ci95'][0]:+.3f}..{m['ci95'][1]:+.3f}); persistence cutoff "
+              f"{m['persistence_threshold_ppm']:.4f} ppm")
         a("")
 
         a("### Era gate\n")

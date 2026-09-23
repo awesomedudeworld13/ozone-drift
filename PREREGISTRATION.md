@@ -274,3 +274,37 @@ performance. What the design requires is that operational years fall *after* the
 benchmark era and are processed as raw data rather than a curated extract — both
 of which hold. AirNow and OpenAQ offer genuinely recent data but require API
 keys, which is why neither backs the reproducible core.
+
+---
+
+# Addendum: 2026-09-23, two corrections to the verdict notes above
+
+An addition, not a revision. The text above is left as written.
+
+## The "operational training made things worse" finding does not hold
+
+The section "Unpredicted finding: operational training made things worse"
+reported D − B = −0.136 (95% CI −0.255 to −0.009) and concluded that "the loss
+is not a training-data problem." That conclusion was wrong.
+
+Both cells are scored at their own frozen TSS cutoffs, and those cutoffs were
+picked on different validation windows. With the cutoff removed (peak TSS on
+the same operational test rows), the two models are indistinguishable: B 0.678,
+D 0.677 at the core tier. At the extended tier D is ahead (0.660 against
+0.615). The −0.136 therefore measures how badly D's cutoff transferred, not how
+well D ranks days. The `testing-new` branch's Z1, which holds the validation
+window fixed and varies only the training data, found no era effect at equal
+size (+0.016, CI −0.075 to +0.107).
+
+The generated answer text in `gap.py` now states these limits instead of the
+original conclusion.
+
+## The persistence comparison was unfair to persistence
+
+`PersistenceBaseline` was scored only at the fixed 0.5 cutoff, i.e. "warn when
+today already exceeded 70 ppb", while the model's cutoff was tuned on
+validation. With persistence's cutoff tuned on the same validation days
+(`persistence_tuned` in `results/`), persistence scores 0.649 on the
+operational years against the model's 0.670. The difference, +0.021 (CI −0.045
+to +0.091), includes zero; at the extended tier it is −0.025. The model has not
+been shown to beat persistence. Both versions of the baseline are now reported.

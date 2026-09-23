@@ -59,30 +59,40 @@ Training on earlier days and testing on later ones removes both problems. That i
 
 ## Does feeding it newer data help?
 
-A natural fix when a model degrades is "just retrain it on recent data." We tested that directly, and for this problem it is the wrong instinct. Retraining on recent data made things worse.
+A natural fix when a model degrades is "just retrain it on recent data." We tested that directly. At first it looked like retraining made things worse. It didn't: the drop came from the warning cutoff, not the model.
 
-| Model trained on | Scored on 2015–2019 | Scored on 2022–2025 |
-|---|---|---|
-| 2015–2019 (older data) | 0.593 | **0.637** |
-| 2022–2025 (newer data) | 0.539 | **0.501** |
+| Model trained on | Scored on 2015–2019 | Scored on 2022–2025 | Same, best possible cutoff |
+|---|---|---|---|
+| 2015–2019 (older data) | 0.593 | **0.637** | 0.678 |
+| 2022–2025 (newer data) | 0.539 | **0.501** | 0.677 |
 
-On exactly the same recent test days, the model trained on older data scored 0.637 and the model trained on newer data scored 0.501.
+With each model's own frozen cutoff, the newer-data model scores 0.136 lower on the same recent days, and that difference is outside the error bar (−0.255 to −0.009). This repo originally reported it as "retraining hurts."
 
-That is a drop of 0.136, and the error bar runs from −0.255 to −0.009. It stays below zero, so this is not noise. The older, larger training set simply generalizes better.
+The last column takes the cutoff out of the picture. It gives each model the best cutoff for those days, so it measures how well the model ranks risky days above safe ones. By that measure the two models are identical: 0.678 against 0.677. The newer model sorts days just as well. Its cutoff, picked on a different stretch of validation days, just doesn't carry over as well.
 
-**Honest caveat:** the recent period has fewer days to train on, so some of this could be "less data" rather than "wrong data." Separating those two needs a test at several training-set sizes, which this project has not done yet.
+There was also a second problem. The newer-data model had fewer days to train on, so "newer" and "less" were mixed together. A follow-up on the `testing-new` branch fixed the validation window and changed only the training data. At equal size, newer data was no worse (+0.016, error bar −0.075 to +0.107).
 
-This matches what the companion solar-flare project found. Retraining on newer data does not close the gap there either.
+**What this domain actually shows about retraining:** nothing either way about the data itself. What it does show is that a frozen cutoff moved to a new period can cost more skill than the model loses. That is the same effect the solar project found.
 
 ---
 
 ## Is the model actually any good?
 
-Worth checking, because a bad model can still produce an interesting-looking comparison.
+Worth checking, because a bad model can still produce an interesting-looking comparison. The cheap forecast is "tomorrow will be like today": no machine learning, just today's reading.
 
-The obvious cheap forecast is "tomorrow will be like today," with no machine learning involved, just repeating today's reading. That scores TSS 0.257 on the real-world years. Our model scores 0.670, so it is doing real work.
+How you score that baseline matters, and we got it wrong at first:
 
-The inputs it leans on most are today's ozone level, the time of year, wind direction, and the day's high temperature. Those are what an atmospheric chemist would expect to matter, which is reassuring. It has not latched onto some accident in the data.
+| Baseline | TSS on 2022–2025 |
+|---|---|
+| Persistence that warns only when today already broke the 70 ppb limit | 0.257 |
+| Persistence with its cutoff tuned on validation, the same way the model's is | **0.649** |
+| Our model | **0.670** |
+
+This README used to compare the model against the first row and say it was "doing real work." That wasn't fair, because the model got a tuned cutoff and persistence didn't. Once persistence gets the same treatment (it warns when today's ozone is above about 49 ppb), the model's lead is +0.021, with an error bar of −0.045 to +0.091. That includes zero. On the extended feature set the model comes out slightly behind (−0.025).
+
+**So the honest statement is that this model has not been shown to beat persistence.** It matches it. The `testing-new` branch found the same thing with a different design: persistence 0.612, best model 0.566.
+
+That doesn't remove the domain from the study. The study compares how much a score falls between testing and deployment, and the ozone model's score holds up well. But it does mean this repo has not shown that a machine-learning ozone forecaster is useful. The inputs the model leans on most (today's ozone, time of year, wind direction, high temperature) are the physically sensible ones, and today's ozone is by far the strongest, which is exactly why persistence is so hard to beat.
 
 ---
 

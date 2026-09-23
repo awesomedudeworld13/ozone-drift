@@ -256,61 +256,73 @@ function renderTier(r) {
          {text:num(g("D_operational_trained_on_operational")), cls:"strong"}],
       ]
     ));
+    const pk = (k) => c[k].peak_tss;
     out.push(chartBars({
       items: [
-        { label: "Older data", sub: "on benchmark years", value: g("A_benchmark_trained_on_benchmark"), tone: "muted" },
-        { label: "Newer data", sub: "on benchmark years", value: g("C_operational_trained_on_benchmark"), tone: "muted" },
-        { label: "Older data", sub: "on recent years", value: g("B_benchmark_trained_on_operational"), tone: "accent",
+        { label: "Older data", sub: "frozen cutoff", value: g("B_benchmark_trained_on_operational"), tone: "accent",
           ci: (c.B_benchmark_trained_on_operational.operating_points.tss || {}).tss_ci95 },
-        { label: "Newer data", sub: "on recent years", value: g("D_operational_trained_on_operational"), tone: "bad",
+        { label: "Newer data", sub: "frozen cutoff", value: g("D_operational_trained_on_operational"), tone: "bad",
           ci: (c.D_operational_trained_on_operational.operating_points.tss || {}).tss_ci95 },
+        { label: "Older data", sub: "best cutoff", value: pk("B_benchmark_trained_on_operational"), tone: "muted" },
+        { label: "Newer data", sub: "best cutoff", value: pk("D_operational_trained_on_operational"), tone: "muted" },
       ],
       yLabel: "TSS", height: 300, slot: 118, domain: [0, 0.85],
-      aria: "TSS by training era and test era",
-      caption: `The comparison that matters is the right-hand pair: <strong>the same recent test
-        days</strong>, scored by a model trained on older data and by one trained on newer data.
-        The newer model is worse. The instinct that a degrading model just needs fresher data is
-        wrong here, and the interval below says so with enough confidence to report it.`,
+      aria: "TSS on recent years by training era, at the frozen and the best cutoff",
+      caption: `All four bars are the <strong>same recent test days</strong>. With each model's own
+        frozen cutoff (left pair) the newer-data model looks clearly worse. Give each model the best
+        cutoff for those days (right pair) and they are identical. The newer model ranks days just as
+        well; its cutoff, picked on a different stretch of validation days, is what failed to carry
+        over. This page originally reported the left pair as "retraining hurts." It doesn't show that.`,
     }));
 
-    const dir = lt.recovery_direction;
-    out.push(`<p>Change from retraining: <span class="strong ${dir === "harms" ? "bad" : dir === "improves" ? "good" : ""}">${sgn(lt.recovery_D_minus_B)}</span>
-      (95% range ${num(lt.recovery_ci95[0])} – ${num(lt.recovery_ci95[1])}) — <strong>${esc(dir)}</strong>.</p>`);
+    out.push(`<p>At the frozen cutoffs, retraining changes TSS by <span class="strong">${sgn(lt.recovery_D_minus_B)}</span>
+      (95% range ${num(lt.recovery_ci95[0])} to ${num(lt.recovery_ci95[1])}). At the best cutoff the change is
+      <span class="strong">${sgn(pk("D_operational_trained_on_operational") - pk("B_benchmark_trained_on_operational"))}</span>.</p>`);
     if (lt.answer) out.push(`<p class="note">${esc(lt.answer)}</p>`);
   }
 
-  const pb = r.persistence_baseline;
+  const pb = r.persistence_baseline, pt = r.persistence_tuned || {}, mvp = r.model_vs_persistence || {};
   if (pb) {
-    out.push(`<h2>Is the model actually doing anything?</h2>`);
-    out.push(`<p class="note">The cheap forecast is <strong>"tomorrow will be like today"</strong> — no machine
-      learning, just repeat today's reading. A model that can't beat it has demonstrated nothing.</p>`);
+    out.push(`<h2>Does the model beat "tomorrow = today"?</h2>`);
+    out.push(`<p class="note">The cheap forecast is to repeat today's reading, with no machine learning.
+      How it is scored matters. Warning only when today already broke the 70 ppb limit is the textbook
+      version, but it gets no tuned cutoff while the model does. The fair version gives persistence a
+      cutoff chosen on the same validation days as the model's.</p>`);
     out.push(chartBars({
       items: Object.entries(pb).flatMap(([k, pp]) => {
         const ours = k === "operational" ? cells.cell3_operational : cells.cell2_benchmark_chronological;
         const where = k === "operational" ? "real-world years" : "benchmark test";
         return [
-          { label: "Tomorrow = today", sub: where, value: pp.operating_points.tss.tss, tone: "muted" },
+          { label: "Today > 70 ppb", sub: where, value: pp.operating_points.tss.tss, tone: "muted" },
+          { label: "Persistence, tuned", sub: where, value: pt[k] ? pt[k].operating_points.tss.tss : null, tone: "muted" },
           { label: "Our model", sub: where, value: ours ? ours.operating_points.tss.tss : null, tone: "accent" },
         ];
       }),
-      yLabel: "TSS", height: 280, slot: 118, domain: [0, 0.85],
-      aria: "model against the persistence baseline",
-      caption: `A model that cannot beat "repeat today's reading" has demonstrated nothing, so
-        this is the check that keeps the rest of the page meaningful. It clears the baseline on
-        both sets of years by a wide margin.`,
+      yLabel: "TSS", height: 280, slot: 104, domain: [0, 0.85],
+      aria: "model against two versions of the persistence baseline",
+      caption: `Against the textbook version the model looks far ahead. Against the fair version it is
+        level: the difference on the real-world years is within the error bar. This page originally showed
+        only the textbook version and said the model cleared it "by a wide margin." That comparison was
+        unfair to persistence.`,
     }));
     out.push(table(
-      [{label:"Scored on"}, {label:"Station-days", num:true}, {label:'"Tomorrow = today"', num:true}, {label:"Our model", num:true}],
-      Object.entries(pb).map(([k, p]) => {
+      [{label:"Scored on"}, {label:"Today > 70 ppb", num:true}, {label:"Persistence, tuned", num:true},
+       {label:"Our model", num:true}, {label:"Model − tuned (95% range)", num:true}],
+      Object.entries(pb).map(([k, pp]) => {
         const ours = k === "operational" ? cells.cell3_operational : cells.cell2_benchmark_chronological;
+        const m = mvp[k];
         return [
           {text: k === "operational" ? "Real-world years" : "Benchmark test"},
-          {text: p.n.toLocaleString()},
-          {text: num(p.operating_points.tss.tss)},
-          {text: num(ours ? ours.operating_points.tss.tss : null), cls:"strong good"},
+          {text: num(pp.operating_points.tss.tss)},
+          {text: num(pt[k] ? pt[k].operating_points.tss.tss : null)},
+          {text: num(ours ? ours.operating_points.tss.tss : null), cls:"strong"},
+          {text: m ? `${sgn(m.model_minus_tuned_persistence_tss)} (${num(m.ci95[0])} to ${num(m.ci95[1])})` : "—"},
         ];
       })
     ));
+    out.push(`<p><strong>The model has not been shown to beat persistence.</strong> Its score holds up well from
+      testing to deployment, which is what this domain contributes to the study, but as a forecaster it
+      matches repeating today's reading rather than improving on it.</p>`);
   }
 
   const mc = r.models && (r.models.chronological || r.models.random);

@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-09-21T02:45:26+00:00",
+  "generated_at_utc": "2026-09-23T22:34:55+00:00",
   "tiers": {
     "core": {
-      "generated_at_utc": "2026-09-21T02:45:26+00:00",
+      "generated_at_utc": "2026-09-23T22:34:55+00:00",
       "tier": "core",
       "bootstrap_resamples": 1000,
       "cluster_key": "date",
@@ -416,12 +416,12 @@
         "recovery_significant": true,
         "recovery_direction": "harms",
         "recovery_fraction_of_gap": 3.056995,
-        "answer": "Operational training changes TSS by -0.136 on the same operational test rows (95% CI -0.255..-0.009). The interval excludes zero BELOW, so training on the newer era measurably HURT \u2014 the benchmark-era model generalises to deployment better than a model fitted on deployment-era data. The loss is not a training-data problem, and collecting more recent data would not fix it.",
+        "answer": "Operational training changes TSS by -0.136 on the same operational test rows (95% CI -0.255..-0.009). The interval excludes zero below, so at these frozen cutoffs the newer-era model scored worse. Two things limit what that means. The newer-era model trained on fewer days, so era and amount of data are confounded. And each model's cutoff was chosen on a different validation window, so part of the difference is how well a cutoff transfers rather than how well the model ranks days; compare the threshold-free peak TSS of cells B and D. A follow-up that fixes the window and varies only the training data found no era effect at equal size (testing-new branch, Z1).",
         "operational_model": {
           "model_version": 1,
           "label": "core/operational/chronological",
-          "trained_at_utc": "2026-09-21T02:45:33+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:35:02+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -625,12 +625,94 @@
           }
         }
       },
+      "persistence_tuned": {
+        "benchmark_test": {
+          "name": "benchmark_test",
+          "description": "Persistence with its cutoff chosen on validation, like the model's.",
+          "n": 4164,
+          "days": 274,
+          "base_rate": 0.017051,
+          "peak_tss": 0.575328,
+          "operating_points": {
+            "tss": {
+              "n": 4164,
+              "base_rate": 0.017051,
+              "threshold": 0.35,
+              "tp": 49,
+              "fp": 784,
+              "fn": 22,
+              "tn": 3309,
+              "recall": 0.690141,
+              "false_alarm_rate": 0.191547,
+              "precision": 0.058824,
+              "f1": 0.108407,
+              "accuracy": 0.806436,
+              "tss": 0.498594,
+              "brier": 0.082821,
+              "brier_skill": -3.941521,
+              "tss_ci95": [
+                0.292087,
+                0.667816
+              ]
+            }
+          }
+        },
+        "operational": {
+          "name": "operational",
+          "description": "Persistence with its cutoff chosen on validation, like the model's.",
+          "n": 22072,
+          "days": 1460,
+          "base_rate": 0.02519,
+          "peak_tss": 0.655897,
+          "operating_points": {
+            "tss": {
+              "n": 22072,
+              "base_rate": 0.02519,
+              "threshold": 0.35,
+              "tp": 475,
+              "fp": 4411,
+              "fn": 81,
+              "tn": 17105,
+              "recall": 0.854317,
+              "false_alarm_rate": 0.20501,
+              "precision": 0.097217,
+              "f1": 0.174568,
+              "accuracy": 0.796484,
+              "tss": 0.649306,
+              "brier": 0.086933,
+              "brier_skill": -2.540217,
+              "tss_ci95": [
+                0.59806,
+                0.700814
+              ]
+            }
+          }
+        }
+      },
+      "model_vs_persistence": {
+        "benchmark_test": {
+          "model_minus_tuned_persistence_tss": 0.094266,
+          "ci95": [
+            -0.138555,
+            0.341902
+          ],
+          "persistence_threshold_ppm": 0.049
+        },
+        "operational": {
+          "model_minus_tuned_persistence_tss": 0.020959,
+          "ci95": [
+            -0.045366,
+            0.09106
+          ],
+          "persistence_threshold_ppm": 0.049
+        }
+      },
       "models": {
         "random": {
           "model_version": 1,
           "label": "core/benchmark/random",
-          "trained_at_utc": "2026-09-21T02:45:28+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:34:57+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "random",
           "split_sizes": {
@@ -730,8 +812,8 @@
         "chronological": {
           "model_version": 1,
           "label": "core/benchmark/chronological",
-          "trained_at_utc": "2026-09-21T02:45:29+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:34:58+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -831,7 +913,7 @@
       }
     },
     "extended": {
-      "generated_at_utc": "2026-09-21T02:46:30+00:00",
+      "generated_at_utc": "2026-09-23T22:36:05+00:00",
       "tier": "extended",
       "bootstrap_resamples": 1000,
       "cluster_key": "date",
@@ -1249,8 +1331,8 @@
         "operational_model": {
           "model_version": 1,
           "label": "extended/operational/chronological",
-          "trained_at_utc": "2026-09-21T02:46:36+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:36:12+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
@@ -1466,12 +1548,94 @@
           }
         }
       },
+      "persistence_tuned": {
+        "benchmark_test": {
+          "name": "benchmark_test",
+          "description": "Persistence with its cutoff chosen on validation, like the model's.",
+          "n": 1884,
+          "days": 274,
+          "base_rate": 0.018047,
+          "peak_tss": 0.575008,
+          "operating_points": {
+            "tss": {
+              "n": 1884,
+              "base_rate": 0.018047,
+              "threshold": 0.348854,
+              "tp": 22,
+              "fp": 390,
+              "fn": 12,
+              "tn": 1460,
+              "recall": 0.647059,
+              "false_alarm_rate": 0.210811,
+              "precision": 0.053398,
+              "f1": 0.098655,
+              "accuracy": 0.786624,
+              "tss": 0.436248,
+              "brier": 0.086284,
+              "brier_skill": -3.868992,
+              "tss_ci95": [
+                0.17433,
+                0.662318
+              ]
+            }
+          }
+        },
+        "operational": {
+          "name": "operational",
+          "description": "Persistence with its cutoff chosen on validation, like the model's.",
+          "n": 9199,
+          "days": 1460,
+          "base_rate": 0.029242,
+          "peak_tss": 0.636117,
+          "operating_points": {
+            "tss": {
+              "n": 9199,
+              "base_rate": 0.029242,
+              "threshold": 0.348854,
+              "tp": 228,
+              "fp": 1970,
+              "fn": 41,
+              "tn": 6960,
+              "recall": 0.847584,
+              "false_alarm_rate": 0.220605,
+              "precision": 0.103731,
+              "f1": 0.18484,
+              "accuracy": 0.781389,
+              "tss": 0.626979,
+              "brier": 0.091741,
+              "brier_skill": -2.23178,
+              "tss_ci95": [
+                0.567057,
+                0.681756
+              ]
+            }
+          }
+        }
+      },
+      "model_vs_persistence": {
+        "benchmark_test": {
+          "model_minus_tuned_persistence_tss": 0.064229,
+          "ci95": [
+            -0.287588,
+            0.390388
+          ],
+          "persistence_threshold_ppm": 0.04884
+        },
+        "operational": {
+          "model_minus_tuned_persistence_tss": -0.025216,
+          "ci95": [
+            -0.116835,
+            0.065648
+          ],
+          "persistence_threshold_ppm": 0.04884
+        }
+      },
       "models": {
         "random": {
           "model_version": 1,
           "label": "extended/benchmark/random",
-          "trained_at_utc": "2026-09-21T02:46:31+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:36:07+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "random",
           "split_sizes": {
@@ -1583,8 +1747,8 @@
         "chronological": {
           "model_version": 1,
           "label": "extended/benchmark/chronological",
-          "trained_at_utc": "2026-09-21T02:46:32+00:00",
-          "git_commit": "4e50f3325b73e78ae14c23741ac5fa7a371dfb14",
+          "trained_at_utc": "2026-09-23T22:36:08+00:00",
+          "git_commit": "3da67540a3dc8dc71c8a83a383c3bfd1c671b78c",
           "python": "3.12.10",
           "split_name": "chronological",
           "split_sizes": {
