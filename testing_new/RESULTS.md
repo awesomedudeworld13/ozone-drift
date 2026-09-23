@@ -114,3 +114,21 @@ change was made**: the model and threshold stay frozen as pre-registered.
   (in-season threshold selection and probability calibration, e.g. isotonic
   on in-season validation) belongs in the next pre-registration.
 
+
+## Correction (2026-09-23): the live forecast is same-morning, not next-day
+
+See deviation D2. Day D's features need data through about 07:00 LST on the
+target day, so every live forecast is issued on the morning of the day it
+forecasts. The first scheduled run went out at 11:53 LST. This record measures
+a few-hours-ahead forecast of the afternoon peak, and L1 will also be reported
+on rows issued by 10:00 LST.
+
+## Threshold policy for the next pre-registration
+
+The cutoff failures here (the off-season validation window, and F keeping the
+dev model's raw cutoff after a refit) are what benchgap 0.2.0's
+[THRESHOLDS.md](https://github.com/awesomedudeworld13/benchgap/blob/main/THRESHOLDS.md)
+now rules out: in-season validation checked against the in-season base rate,
+isotonic calibration before choosing a cutoff, a refit model calibrated on its
+own, and frozen TSS always reported next to peak TSS and Brier. F stays frozen
+as registered.

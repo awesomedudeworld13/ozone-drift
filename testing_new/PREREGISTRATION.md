@@ -119,3 +119,24 @@ from `live_forecasts.csv`. AirNow features for 09-21 stay in
 now refuses to issue once the target day is past 12:00 LST. The scheduled
 07:30 CST run was always inside that limit. The live record starts with the
 first scheduled run.
+
+**D2 (2026-09-23, analysis only; no change to the forecasting code): what the
+live forecast actually is.** The design calls this a next-day forecast. It
+isn't. Day D's features include 8-hour ozone averages that start as late as
+23:00 LST, so they need AirNow data through about 07:00 LST on D+1, the day
+being forecast. The earliest a complete forecast can exist is therefore the
+morning of the target day. The first scheduled row was issued at 11:53 LST
+(GitHub ran the 06:10 CST job almost six hours late), inside the 12:00 LST
+limit from D1. So these are **same-morning forecasts of the afternoon's
+ozone**, with lead times of a few hours, not a day.
+
+Two consequences, fixed now before any row is verified:
+1. L1 is reported twice: on every row, and on rows issued by 10:00 LST, before
+   Houston's ozone usually starts climbing. Issue time in LST is derived from
+   `issued_utc` (UTC−6).
+2. A run that fires before about 07:00 LST computes day D's late 8-hour
+   averages from fewer hours (the ≥6-of-8 rule allows it), so the same day's
+   features can differ with run time. `live_features.csv` keeps what each run
+   saw; the next pre-registration should fix one issue time.
+
+Every write-up of this record calls it a same-morning forecast.
