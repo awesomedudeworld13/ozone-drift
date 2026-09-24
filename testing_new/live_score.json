@@ -1,4 +1,16 @@
 {
-  "ready": false,
-  "reason": "no verified forecasts yet"
+  "n": 16,
+  "days": 1,
+  "exceedances": 1,
+  "brier": {
+    "F": 0.54007,
+    "main": 0.05135
+  },
+  "tss_F_minus_main": {
+    "value": 0.0,
+    "ci95": [
+      0.0,
+      0.0
+    ]
+  }
 }
