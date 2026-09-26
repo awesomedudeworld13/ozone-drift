@@ -1,13 +1,13 @@
 {
-  "n": 32,
-  "days": 2,
-  "exceedances": 5,
+  "n": 48,
+  "days": 3,
+  "exceedances": 8,
   "brier": {
-    "F": 0.47627,
-    "main": 0.13907
+    "F": 0.45786,
+    "main": 0.14464
   },
   "tss_F_minus_main": {
-    "value": -0.037,
+    "value": -0.025,
     "ci95": [
       -0.0833,
       0.0
