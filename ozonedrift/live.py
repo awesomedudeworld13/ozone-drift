@@ -117,12 +117,16 @@ def run(now: datetime | None = None) -> dict:
     done_days = {r["feature_date"] for r in rows}
     summary = {"feature_date": str(day), "sites_with_data": int(len(feats))}
 
-    # 1) verify forecasts that targeted `day`
-    actual = dict(zip(feats.site, feats.o3_max8h)) if len(feats) else {}
+    # 1) verify every pending forecast whose target day is complete, not just `day`'s:
+    #    a day with no successful run would otherwise leave its forecasts pending forever.
+    actual = {str(day): dict(zip(feats.site, feats.o3_max8h)) if len(feats) else {}}
+    for d in {r["target_date"] for r in rows if r["status"] == "pending" and r["target_date"] < str(day)}:
+        f = day_features(date.fromisoformat(d))
+        actual[d] = dict(zip(f.site, f.o3_max8h)) if len(f) else {}
     verified = 0
     for r in rows:
-        if r["status"] == "pending" and r["target_date"] == str(day) and actual.get(r["site"]) is not None:
-            a = actual[r["site"]]
+        a = actual.get(r["target_date"], {}).get(r["site"]) if r["status"] == "pending" else None
+        if a is not None and pd.notna(a):
             r.update(status="verified", actual_o3_max8h=f"{a:.3f}", y=str(int(a > NAAQS_8H_OZONE_PPM)))
             verified += 1
     summary["verified"] = verified
