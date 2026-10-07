@@ -10,6 +10,13 @@ on:
     # GitHub often starts scheduled runs hours late, and live.py refuses to forecast after
     # 12:00 LST, so one start time alone can lose a day. Earliest useful: 12:00 UTC, when
     # yesterday's last 8-hour ozone average is complete.
+    #
+    # In practice GitHub has started these 4.5-8.5 h late, so many days started after the
+    # cutoff and were lost. The two early crons below are the fix: started late (the usual
+    # case) they land mid-morning LST; started on time, the `wait` job holds them until
+    # 13:05 UTC (07:05 LST), so features are never built from an incomplete day (D2).
+    - cron: "15 7 * * *"       # 01:15 CST, waits up to 5h50
+    - cron: "15 8 * * *"       # 02:15 CST, waits up to 4h50
     - cron: "10 12 * * *"      # 06:10 CST
     - cron: "30 13 * * *"      # 07:30 CST
     - cron: "10 14 * * *"      # 08:10 CST
@@ -18,14 +25,24 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: testing-new-live
-  cancel-in-progress: false
-
 jobs:
+  wait:
+    # Outside the concurrency group, so a sleeping early run never queues or cancels others.
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Wait until 13:05 UTC (07:05 LST)
+        run: |
+          now=$(date -u +%s); target=$(date -u -d "today 13:05" +%s)
+          if [ "$now" -lt "$target" ]; then echo "sleeping $(( (target-now)/60 )) min"; sleep $(( target-now )); fi
+
   forecast:
+    needs: wait
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: testing-new-live
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:
