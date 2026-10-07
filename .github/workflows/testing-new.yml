@@ -24,6 +24,7 @@ on:
 
 permissions:
   contents: write
+  actions: write        # lets the cutoff step disable this workflow
 
 jobs:
   wait:
@@ -31,6 +32,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
+      - name: Stop after the final collection cutoff
+        # Live collection is final: data through 2026-11-22; runs continue to 2026-11-24 only so the
+        # last forecasts get verified (final scores use issue dates <= 11-22). The first scheduled run
+        # after 2026-11-24 disables this workflow and cancels itself.
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ $(date -u +%F) > 2026-11-24 ]]; then
+            gh workflow disable "$GITHUB_WORKFLOW" -R "$GITHUB_REPOSITORY"
+            gh run cancel "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY"; sleep 120; exit 1
+          fi
+
       - name: Wait until 13:05 UTC (07:05 LST)
         run: |
           now=$(date -u +%s); target=$(date -u -d "today 13:05" +%s)
